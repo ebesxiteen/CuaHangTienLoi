@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "CustomerDemo",
+            "request": "launch",
+            "mainClass": "GUI.CustomerDemo",
+            "projectName": "CuaHangTienLoi_87ea6f62"
+        },
+        {
+            "type": "java",
             "name": "Start",
             "request": "launch",
             "mainClass": "GUI.Start",

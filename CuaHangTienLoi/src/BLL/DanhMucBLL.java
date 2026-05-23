@@ -94,5 +94,17 @@ public class DanhMucBLL implements BLLinterface<DTO.DanhMuc>{
             }
         }
     }
+
+    public void update(DTO.DanhMuc dm) {
+        try {
+            if (daldm.update(dm) > 0) {
+                JOptionPane.showMessageDialog(dmView, "Sửa thành công");
+            } else {
+                JOptionPane.showMessageDialog(dmView, "Sửa thất bại");
+            }
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+    }
     
 }

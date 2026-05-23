@@ -4,14 +4,12 @@
  */
 package DTO;
 
-import java.time.LocalDate;
-
 /**
  *
  * @author votru
  */
 public class HoaDon {
-    private int mahd;
+    private String mahd;
     private String makh;
     private String manv;
     private String ngaytao;
@@ -20,7 +18,7 @@ public class HoaDon {
     public HoaDon() {
     }
 
-    public int getMahd() {
+    public String getMahd() {
         return mahd;
     }
 
@@ -40,7 +38,7 @@ public class HoaDon {
         return tongtien;
     }
 
-    public void setMahd(int mahd) {
+    public void setMahd(String mahd) {
         this.mahd = mahd;
     }
 
@@ -60,7 +58,7 @@ public class HoaDon {
         this.tongtien = tongtien;
     }
 
-    public HoaDon(int mahd, String makh, String manv, String ngaytao, int tongtien) {
+    public HoaDon(String mahd, String makh, String manv, String ngaytao, int tongtien) {
         this.mahd = mahd;
         this.makh = makh;
         this.manv = manv;

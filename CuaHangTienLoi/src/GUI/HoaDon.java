@@ -4,6 +4,11 @@
  */
 package GUI;
 
+import java.util.ArrayList;
+
+import javax.swing.table.DefaultTableModel;
+
+import BLL.HoaDonBLL;
 /**
  *
  * @author ACER
@@ -15,6 +20,190 @@ public class HoaDon extends javax.swing.JPanel {
      */
     public HoaDon() {
         initComponents();
+        initHandlers();
+    }
+
+    private HoaDonBLL hdBLL = new HoaDonBLL();
+    private java.util.List<DTO.CtHoaDon> currentDetails = new java.util.ArrayList<>();
+
+    public void loadHoaDonTable() {
+        try {
+            ArrayList<DTO.HoaDon> list = hdBLL.getAll();
+            String[] cols = new String[]{"Mã HĐ", "Mã KH", "Mã NV", "Ngày tạo", "Tổng tiền"};
+            DefaultTableModel model = new DefaultTableModel(cols, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) { return false; }
+            };
+            for (DTO.HoaDon h : list) {
+                model.addRow(new Object[]{h.getMahd(), h.getMakh(), h.getManv(), h.getNgaytao(), h.getTongtien()});
+            }
+            table_all.setModel(model);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    // Wire buttons for create/delete
+    private void initHandlers() {
+        // inputs: invoice id auto-filled, other fields editable
+        try {
+            String next = new DAL.HoaDonDAL().getNextMaHD();
+            jTextField2.setText(next);
+            jTextField2.setEditable(false);
+        } catch (Exception ex) { jTextField2.setEditable(true); }
+        jTextField3.setEditable(true);
+        jTextField4.setEditable(true);
+        jTextField5.setEditable(true);
+        jTextField6.setEditable(true);
+        jTextField7.setEditable(true);
+        // Add product to current invoice details (dialog with category -> product combobox)
+        jButton4.addActionListener(e -> {
+            try {
+                // ensure invoice id exists (auto-create on first add)
+                if (jTextField2.getText().trim().isEmpty()) {
+                    String next = new DAL.HoaDonDAL().getNextMaHD();
+                    jTextField2.setText(next);
+                    jTextField2.setEditable(false);
+                }
+                String mahd = jTextField2.getText().trim();
+
+                // prepare category and product lists
+                java.util.List<DTO.sanPham> products = DAL.DALsanPham.getintance().selectAll();
+                java.util.Set<String> cats = new java.util.LinkedHashSet<>();
+                for (DTO.sanPham p : products) cats.add(p.getMaloaisp());
+
+                javax.swing.JComboBox<String> cboCat = new javax.swing.JComboBox<>(cats.toArray(new String[0]));
+                javax.swing.JComboBox<String> cboProd = new javax.swing.JComboBox<>();
+                javax.swing.JLabel lblName = new javax.swing.JLabel("");
+                javax.swing.JTextField txtQty = new javax.swing.JTextField();
+
+                // populate products for selected category
+                java.util.function.Consumer<String> fillProducts = (cat) -> {
+                    cboProd.removeAllItems();
+                    for (DTO.sanPham p : products) if (p.getMaloaisp().equals(cat)) cboProd.addItem(p.getMasp());
+                };
+                if (cboCat.getItemCount() > 0) fillProducts.accept((String) cboCat.getItemAt(0));
+
+                cboCat.addActionListener(ev -> {
+                    String selected = (String) cboCat.getSelectedItem();
+                    if (selected != null) fillProducts.accept(selected);
+                });
+
+                // when product changes, update name label
+                cboProd.addActionListener(ev -> {
+                    String m = (String) cboProd.getSelectedItem();
+                    if (m != null) {
+                        DTO.sanPham sp = DAL.DALsanPham.getintance().selectById(m);
+                        if (sp != null) lblName.setText(sp.getTensp() + " (Giá: " + sp.getDongia() + ")");
+                        else lblName.setText("");
+                    }
+                });
+
+                // layout panel
+                javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.GridLayout(0,1,4,4));
+                panel.add(new javax.swing.JLabel("Loại sản phẩm:"));
+                panel.add(cboCat);
+                panel.add(new javax.swing.JLabel("Mã sản phẩm:"));
+                panel.add(cboProd);
+                panel.add(new javax.swing.JLabel("Tên sản phẩm:"));
+                panel.add(lblName);
+                panel.add(new javax.swing.JLabel("Số lượng mua:"));
+                panel.add(txtQty);
+
+                int res = javax.swing.JOptionPane.showConfirmDialog(this, panel, "Thêm sản phẩm vào hóa đơn", javax.swing.JOptionPane.OK_CANCEL_OPTION, javax.swing.JOptionPane.PLAIN_MESSAGE);
+                if (res != javax.swing.JOptionPane.OK_OPTION) return;
+                String masp = (String) cboProd.getSelectedItem();
+                if (masp == null || masp.trim().isEmpty()) return;
+                int qty = 0; try { qty = Integer.parseInt(txtQty.getText().trim()); if (qty <= 0) throw new NumberFormatException(); } catch (Exception ex) { javax.swing.JOptionPane.showMessageDialog(this, "Số lượng không hợp lệ"); return; }
+
+                DTO.sanPham sp = DAL.DALsanPham.getintance().selectById(masp);
+                int price = (sp != null) ? (int) sp.getDongia() : 0;
+                int thanhtien = qty * price;
+                DTO.CtHoaDon ct = new DTO.CtHoaDon(mahd, masp.trim(), qty, price, thanhtien);
+                currentDetails.add(ct);
+                refreshDetailTable();
+                updateInvoiceTotal();
+            } catch (Exception ex) { ex.printStackTrace(); }
+        });
+
+        jButton3.addActionListener(e -> {
+            int r = table_all.getSelectedRow();
+            if (r < 0) { javax.swing.JOptionPane.showMessageDialog(this, "Chọn 1 hóa đơn để xóa"); return; }
+            String mahd = (String) table_all.getValueAt(r, 0);
+            int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Xóa hóa đơn " + mahd + " ?", "Xác nhận", javax.swing.JOptionPane.YES_NO_OPTION);
+            if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+                boolean ok = hdBLL.deleteHoaDon(mahd);
+                if (ok) javax.swing.JOptionPane.showMessageDialog(this, "Xóa thành công");
+                else javax.swing.JOptionPane.showMessageDialog(this, "Xóa thất bại");
+                loadHoaDonTable();
+            }
+        });
+        // Reset button: clear inputs and keep them editable
+        jButton2.addActionListener(e -> {
+            jTextField1.setText("");
+            jTextField2.setText("");
+            jTextField3.setText("");
+            jTextField4.setText("");
+            jTextField5.setText("");
+            jTextField6.setText("");
+            jTextField7.setText("");
+            tongtien_hd.setText("");
+            jTextField1.setEditable(true);
+            jTextField2.setEditable(true);
+            jTextField3.setEditable(true);
+            jTextField4.setEditable(true);
+            jTextField5.setEditable(true);
+            jTextField6.setEditable(true);
+            jTextField7.setEditable(true);
+            currentDetails.clear();
+            refreshDetailTable();
+            try { jTextField2.setText(new DAL.HoaDonDAL().getNextMaHD()); jTextField2.setEditable(false); } catch (Exception ex) {}
+        });
+
+        // Thanh toán: save invoice and all current details to DB
+        jButton1.addActionListener(e -> {
+            try {
+                String mahd = jTextField2.getText().trim();
+                if (mahd.isEmpty()) { javax.swing.JOptionPane.showMessageDialog(this, "Mã hóa đơn rỗng"); return; }
+                String makh = jTextField5.getText().trim();
+                String manv = jTextField7.getText().trim();
+                int tong = 0; try { tong = Integer.parseInt(tongtien_hd.getText().trim()); } catch (Exception ex) { tong = 0; }
+                DTO.HoaDon hd = new DTO.HoaDon(mahd, makh, manv, java.time.LocalDate.now().toString(), tong);
+                boolean ok = hdBLL.createHoaDon(hd, new java.util.ArrayList<>(currentDetails));
+                if (ok) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Thanh toán thành công");
+                    currentDetails.clear();
+                    refreshDetailTable();
+                    loadHoaDonTable();
+                    // prepare next invoice id
+                    try { jTextField2.setText(new DAL.HoaDonDAL().getNextMaHD()); jTextField2.setEditable(false); } catch (Exception ex) { jTextField2.setEditable(true); }
+                    jTextField1.setText(""); jTextField3.setText(""); jTextField4.setText(""); jTextField5.setText(""); jTextField6.setText(""); jTextField7.setText(""); tongtien_hd.setText("");
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Thanh toán thất bại");
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
+        });
+    }
+
+    private void refreshDetailTable() {
+        try {
+            String[] cols = new String[]{"Mã HĐ", "Mã SP", "Số lượng", "Đơn giá", "Thành tiền"};
+            javax.swing.table.DefaultTableModel model = new javax.swing.table.DefaultTableModel(cols, 0) {
+                @Override public boolean isCellEditable(int r, int c) { return false; }
+            };
+            for (DTO.CtHoaDon c : currentDetails) {
+                model.addRow(new Object[]{c.getMahd(), c.getMasp(), c.getSoluong(), c.getDongia(), c.getThanhtien()});
+            }
+            jTable1.setModel(model);
+        } catch (Exception ex) { ex.printStackTrace(); }
+    }
+
+    private void updateInvoiceTotal() {
+        try {
+            int sum = 0;
+            for (DTO.CtHoaDon c : currentDetails) sum += c.getThanhtien();
+            tongtien_hd.setText(String.valueOf(sum));
+        } catch (Exception ex) { ex.printStackTrace(); }
     }
 
     /**
