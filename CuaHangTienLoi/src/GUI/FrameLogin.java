@@ -1,8 +1,9 @@
 
 package GUI;
 
-import BLL.LoginoutBLL;
 import javax.swing.JOptionPane;
+
+import BLL.LoginoutBLL;
 
 public class FrameLogin extends javax.swing.JFrame {
     LoginoutBLL logbll = new LoginoutBLL(this);
@@ -120,7 +121,13 @@ public class FrameLogin extends javax.swing.JFrame {
 
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 70, -1, 410));
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/bgDKDN.jpg"))); // NOI18N
+        java.net.URL bgUrl = getClass().getResource("/img/bgDKDN.jpg");
+        if (bgUrl != null) {
+            jLabel1.setIcon(new javax.swing.ImageIcon(bgUrl)); // NOI18N
+        } else {
+            // fallback: no image available
+            jLabel1.setText("");
+        }
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 850, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
