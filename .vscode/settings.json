@@ -1,0 +1,9 @@
+{
+    "java.project.sourcePaths": [
+        "CuaHangTienLoi/src"
+    ],
+    "java.project.referencedLibraries": [
+        "CuaHangTienLoi/lib/**/*.jar"
+    ],
+    "java.configuration.updateBuildConfiguration": "automatic"
+}

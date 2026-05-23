@@ -5,18 +5,19 @@
 package BLL;
 
 
-import GUI.DanhMuc;
-import DTO.danhMuc;
-import javax.swing.JOptionPane;
-import DAL.DALdanhMuc;
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
 
-public class DanhMucBLL implements BLLinterface<danhMuc>{
+import DAL.DALDanhMuc;
+import GUI.DanhMuc;
+
+
+public class DanhMucBLL implements BLLinterface<DTO.DanhMuc>{
     
     private DanhMuc dmView;
-    private DALdanhMuc daldm = new DALdanhMuc();
-    private ArrayList<danhMuc> list = new ArrayList<>();
+    private DALDanhMuc daldm = new DALDanhMuc();
+    private ArrayList<DTO.DanhMuc> list = new ArrayList<>();
 
     public DanhMucBLL(DanhMuc dm) {
         this.dmView = dm;
@@ -26,15 +27,15 @@ public class DanhMucBLL implements BLLinterface<danhMuc>{
      
     }
     
-    public ArrayList<danhMuc> getALL() {
+    public ArrayList<DTO.DanhMuc> getALL() {
         return daldm.selectAll();
     }
    
     @Override
-    public void add(danhMuc dm) {
+    public void add(DTO.DanhMuc dm) {
         list = daldm.selectAll();
         boolean flag = false;
-        for (danhMuc tmp : list) {
+        for (DTO.DanhMuc tmp : list) {
             if (tmp.getMaloai().equals(dm.getMaloai())) {
                 flag = true;
             }
@@ -55,7 +56,7 @@ public class DanhMucBLL implements BLLinterface<danhMuc>{
     }
     
     @Override
-    public void delete(danhMuc dm) {
+    public void delete(DTO.DanhMuc dm) {
          try {
              if (daldm.delete(dm) > 0) {
                 JOptionPane.showMessageDialog(dmView, "Xóa thành công");
@@ -68,11 +69,11 @@ public class DanhMucBLL implements BLLinterface<danhMuc>{
     }
     
     @Override
-    public void update(danhMuc dm, String maOld) {
+    public void update(DTO.DanhMuc dm, String maOld) {
          list = daldm.selectAll();
         boolean found = false;
         if (!dm.getMaloai().equals(maOld)) {
-            for (danhMuc tmp : list) {
+            for (DTO.DanhMuc tmp : list) {
                 if (tmp.getMaloai().equals(dm.getMaloai())) {
                     found = true;
                     break;

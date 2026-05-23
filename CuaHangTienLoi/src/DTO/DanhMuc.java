@@ -8,18 +8,18 @@ package DTO;
  *
  * @author votru
  */
-public class danhMuc {
+public class DanhMuc {
     private String maloai;
     private String tenloai;
     private String img;
 
-    public danhMuc(String maloai, String tenloai, String img) {
+    public DanhMuc(String maloai, String tenloai, String img) {
         this.maloai = maloai;
         this.tenloai = tenloai;
         this.img = img;
     }
     
-    public danhMuc(){
+    public DanhMuc(){
         
     }
 

@@ -4,25 +4,27 @@
  */
 package GUI;
 
-import javax.swing.JLabel;
-import javax.swing.table.DefaultTableModel;
-import BLL.DanhMucBLL;
-import java.util.ArrayList;
-import javax.swing.table.DefaultTableCellRenderer;
-import DTO.danhMuc;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.JFileChooser;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+
+import BLL.DanhMucBLL;
+ 
 public class DanhMuc extends javax.swing.JPanel {
     DefaultTableModel model;
-    danhMuc dm = new danhMuc();
-    private ArrayList<danhMuc> list = new ArrayList<>();
+    DTO.DanhMuc dm = new DTO.DanhMuc();
+    private ArrayList<DTO.DanhMuc> list = new ArrayList<>();
     DanhMucBLL dmBll = new DanhMucBLL(this);
     private int count = 0;
     private String matmp, tentmp;
@@ -76,8 +78,8 @@ public class DanhMuc extends javax.swing.JPanel {
         table_danhmuc.addMouseListener(mouseAdapter);
     }
 
-    public void loadTable(ArrayList<danhMuc> list) {
-        danhMuc dm1 = list.get(list.size() - 1);
+    public void loadTable(ArrayList<DTO.DanhMuc> list) {
+        DTO.DanhMuc dm1 = list.get(list.size() - 1);
         model.addRow(new Object[]{
             dm1.getMaloai(), dm1.getTenloai(),dm1.getImg()
         });
@@ -90,7 +92,7 @@ public class DanhMuc extends javax.swing.JPanel {
     public void getTable() {
         list = dmBll.getALL();
         try {
-            for (danhMuc row : list) {
+            for (DTO.DanhMuc row : list) {
                 model.addRow(new Object[]{
                     row.getMaloai(), row.getTenloai(), row.getImg()
                 });
@@ -383,7 +385,7 @@ public class DanhMuc extends javax.swing.JPanel {
                 String tenloai = ten_loai.getText().trim();
                 String img;
                 Icon icon = image_label.getIcon();
-                for (danhMuc tmp : list) {
+                for (DTO.DanhMuc tmp : list) {
                     if (tmp.getMaloai().equals(maloai)) {
                         JOptionPane.showMessageDialog(this, "Mã loại đã tồn tại");
                         return;
@@ -403,7 +405,7 @@ public class DanhMuc extends javax.swing.JPanel {
                 }
 
                 try {
-                    dm = new danhMuc(maloai, tenloai, img);
+                    dm = new DTO.DanhMuc(maloai, tenloai, img);
                     list.add(dm);
                     dmBll.add(dm);
                     ResetFieldText();
@@ -422,7 +424,7 @@ public class DanhMuc extends javax.swing.JPanel {
                 String tenloai = ten_loai.getText().trim();
                 Icon icon = image_label.getIcon();
                 if (!matmp.equals(maloai)) {
-                    for (danhMuc tmp : list) {
+                    for (DTO.DanhMuc tmp : list) {
                         if (tmp.getMaloai().equals(maloai)) {
                             found = true;
                             break;
@@ -454,7 +456,7 @@ public class DanhMuc extends javax.swing.JPanel {
                 }
 
                 try {
-                    dm = new danhMuc(maloai, tenloai, img);
+                    dm = new DTO.DanhMuc(maloai, tenloai, img);
                     dmBll.update(dm, matmp);
                     ResetFieldText();
                     UnEditable();
@@ -496,7 +498,7 @@ public class DanhMuc extends javax.swing.JPanel {
                 if (confirm == JOptionPane.YES_OPTION) {
                     Image image = ((ImageIcon) icon).getImage();
                     String imagePath = image.toString();
-                    dm = new danhMuc(maloai, tenloai,imagePath);
+                    dm = new DTO.DanhMuc(maloai, tenloai,imagePath);
                     list.remove(dm);
                     dmBll.delete(dm);
                     ResetFieldText();

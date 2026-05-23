@@ -4,31 +4,32 @@
  */
 package GUI;
 
-import java.util.ArrayList;
-import javax.swing.table.DefaultTableModel;
-import DTO.sanPham;
-import DTO.danhMuc;
-import DAL.DALsanPham;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
-import BLL.SanPhamBLL;
-import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 import BLL.DanhMucBLL;
+import BLL.SanPhamBLL;
+import DTO.DanhMuc;
+import DTO.sanPham;
 
 public class SanPhamView extends javax.swing.JPanel {
 
     DefaultTableModel model;
     private sanPham sp;
     private ArrayList<sanPham> list = new ArrayList<>();
-    private ArrayList<danhMuc> listDM = new ArrayList<>();
+    private ArrayList<DanhMuc> listDM = new ArrayList<>();
     SanPhamBLL spBLL = new SanPhamBLL(this);
     DanhMucBLL dmBLL = new DanhMucBLL();
     private int count = -1;
@@ -155,7 +156,7 @@ public class SanPhamView extends javax.swing.JPanel {
 
     public void comboBox() {
         listDM = dmBLL.getALL();
-        for (danhMuc dataDM : listDM) {
+        for (DanhMuc dataDM : listDM) {
             maloai_sp.addItem(dataDM.getMaloai());
         }
     }
