@@ -1,12 +1,10 @@
 package GUI;
 
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.*;
-import GUI.*;
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Cursor;
+
+import javax.swing.JFrame;
 
 public class TrangChu extends JFrame{
     CardLayout cardlayout;
@@ -17,6 +15,9 @@ public class TrangChu extends JFrame{
     NhaCungCap nccView = new NhaCungCap();
     DanhMuc dmView = new DanhMuc(); 
     phieuNhap pnView = new phieuNhap();
+    HoaDon hdView = new HoaDon();
+    CTHoaDon cthdView = new CTHoaDon();
+    TaiKhoan tkView = new TaiKhoan();
     
     public TrangChu(String username) {
         initComponents();
@@ -66,6 +67,10 @@ public class TrangChu extends JFrame{
         Pane_content.add(pnView,"Phiếu Nhập");
         Pane_content.add(nccView,"Nhà Cung Cấp");
         Pane_content.add(dmView,"Danh Mục");
+        // Add invoice views
+        Pane_content.add(hdView, "Hóa Đơn");
+        Pane_content.add(cthdView, "Chi Tiết HĐ");
+        Pane_content.add(tkView, "Tài Khoản");
        
         isMenuVisible = false;
         Pane_content.setVisible(isMenuVisible);
@@ -102,7 +107,12 @@ public class TrangChu extends JFrame{
         pHoaDon.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                
+                // Hiển thị panel Hóa Đơn
+                ClearTableALL();
+                isMenuVisible = true;
+                Pane_content.setVisible(isMenuVisible);
+                cardlayout.show(Pane_content, "Hóa Đơn");
+                // (Optional) later: load data into hdView from BLL/DAL
             }
 
             @Override
@@ -132,7 +142,12 @@ public class TrangChu extends JFrame{
         pChiTietHD.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Xử lý sự kiện click cho pHoaDon
+                // Hiển thị panel Chi Tiết Hóa Đơn
+                ClearTableALL();
+                isMenuVisible = true;
+                Pane_content.setVisible(isMenuVisible);
+                cardlayout.show(Pane_content, "Chi Tiết HĐ");
+                // (Optional) later: load detail data for selected invoice
             }
 
             @Override
@@ -233,7 +248,12 @@ public class TrangChu extends JFrame{
         pDoanhThu.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Xử lý sự kiện click cho pHoaDon
+                // Minimal: hiển thị hộp thông báo hoặc chuyển tới Hóa Đơn (có thể implement báo cáo sau)
+                ClearTableALL();
+                isMenuVisible = true;
+                Pane_content.setVisible(isMenuVisible);
+                // For now show Hóa Đơn as base for doanh thu overview
+                cardlayout.show(Pane_content, "Hóa Đơn");
             }
 
             @Override
@@ -366,7 +386,12 @@ public class TrangChu extends JFrame{
         pTaiKhoan.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Xử lý sự kiện click cho pHoaDon
+                // Hiển thị module Quản lý Tài Khoản
+                ClearTableALL();
+                isMenuVisible = true;
+                Pane_content.setVisible(isMenuVisible);
+                cardlayout.show(Pane_content, "Tài Khoản");
+                tkView.loadData();
             }
 
             @Override
@@ -395,7 +420,10 @@ public class TrangChu extends JFrame{
         pDangXuat.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Xử lý sự kiện click cho pHoaDon
+                // Đăng xuất: đóng TrangChu và mở FrameLogin
+                FrameLogin fl = new FrameLogin();
+                TrangChu.this.dispose();
+                fl.setVisible(true);
             }
 
             @Override

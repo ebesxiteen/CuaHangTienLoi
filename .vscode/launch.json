@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Start",
+            "request": "launch",
+            "mainClass": "GUI.Start",
+            "projectName": "CuaHangTienLoi_87ea6f62"
+        },
+        {
+            "type": "java",
             "name": "Run CuaHangTienLoi",
             "request": "launch",
             "mainClass": "GUI.Start",
