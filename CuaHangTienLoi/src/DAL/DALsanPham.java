@@ -24,14 +24,16 @@ public class DALsanPham implements DALinterface<sanPham> {
         int ketqua = 0;
         try {
             Connection con = Connect.getConnection();
-            String sql = "INSERT INTO sanpham (masp,tensp, maloaisp, soluong, dongia, img) " + " VALUES (?,?,?,?,?,?)";
+            ensureSupplierColumn(con);
+            String sql = "INSERT INTO sanpham (masp,tensp, maloaisp, mancc, soluong, dongia, img) " + " VALUES (?,?,?,?,?,?,?)";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setString(1, t.getMasp());
             pst.setString(2, t.getTensp());
             pst.setString(3, t.getMaloaisp());
-            pst.setInt(4, t.getSoluong());
-            pst.setLong(5, t.getDongia());
-            pst.setString(6, t.getImg());
+            pst.setString(4, t.getMancc());
+            pst.setInt(5, t.getSoluong());
+            pst.setLong(6, t.getDongia());
+            pst.setString(7, t.getImg());
             
             ketqua = pst.executeUpdate();
             Connect.closeConnection(con);
@@ -47,21 +49,24 @@ public class DALsanPham implements DALinterface<sanPham> {
         int ketqua = 0;
         try {
             Connection con = Connect.getConnection();
+            ensureSupplierColumn(con);
             String sql = "UPDATE sanpham "
                     + "SET "
                     + "tensp=? "
                     + ",maloaisp=? "
+                    + ",mancc=? "
                     + ",soluong=? "
                     + ",dongia=? "
-                    + ",img=?"
+                    + ",img=? "
                     + "WHERE masp = ?";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setString(1, t.getTensp());
             pst.setString(2, t.getMaloaisp());
-            pst.setInt(3, t.getSoluong());
-            pst.setLong(4, t.getDongia());
-            pst.setString(5, t.getImg());
-            pst.setString(6, t.getMasp());
+            pst.setString(3, t.getMancc());
+            pst.setInt(4, t.getSoluong());
+            pst.setLong(5, t.getDongia());
+            pst.setString(6, t.getImg());
+            pst.setString(7, t.getMasp());
 
             ketqua = pst.executeUpdate();
 
@@ -77,11 +82,13 @@ public class DALsanPham implements DALinterface<sanPham> {
         int kq = 0;
         try {
             Connection con = Connect.getConnection();
+            ensureSupplierColumn(con);
             String sql = "UPDATE sanpham "
                     + "SET "
                     + "masp=? "
                     + ",tensp=? "
                     + ",maloaisp=? "
+                    + ",mancc=? "
                     + ",soluong=? "
                     + ",dongia=? "
                     + ",img=? "
@@ -90,10 +97,11 @@ public class DALsanPham implements DALinterface<sanPham> {
             pst.setString(1, t.getMasp());
             pst.setString(2, t.getTensp());
             pst.setString(3, t.getMaloaisp());
-            pst.setInt(4, t.getSoluong());
-            pst.setLong(5, t.getDongia());
-            pst.setString(6, t.getImg());
-            pst.setString(7, maOld);
+            pst.setString(4, t.getMancc());
+            pst.setInt(5, t.getSoluong());
+            pst.setLong(6, t.getDongia());
+            pst.setString(7, t.getImg());
+            pst.setString(8, maOld);
 
             kq = pst.executeUpdate();
 
@@ -147,6 +155,7 @@ public class DALsanPham implements DALinterface<sanPham> {
          ArrayList<sanPham> sps = new ArrayList<>();
         try {
             Connection conn = Connect.getConnection();
+            ensureSupplierColumn(conn);
             String sql = "select * from sanpham";
             PreparedStatement pst = conn.prepareStatement(sql);
             ResultSet rs = pst.executeQuery();
@@ -154,10 +163,11 @@ public class DALsanPham implements DALinterface<sanPham> {
                 String masp = rs.getString("masp");
                 String tensp = rs.getString("tensp");
                 String maloai = rs.getString("maloaisp");
+                String mancc = rs.getString("mancc");
                 int soluong = rs.getInt("soluong");
                 long dongia = rs.getLong("dongia");
                 String img = rs.getString("img");
-                sanPham sp = new sanPham(masp,tensp,maloai,soluong,dongia,img);
+                sanPham sp = new sanPham(masp,tensp,maloai,mancc,soluong,dongia,img);
                 sps.add(sp);
             }
             Connect.closeConnection(conn);
@@ -177,6 +187,7 @@ public class DALsanPham implements DALinterface<sanPham> {
         sanPham kq = null;
         try {
             Connection conn = Connect.getConnection();
+            ensureSupplierColumn(conn);
             String sql = "select * from sanpham where masp = ?";
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setString(1, T);
@@ -185,10 +196,11 @@ public class DALsanPham implements DALinterface<sanPham> {
                 String masp = rs.getString("masp");
                 String tensp = rs.getString("tensp");
                 String maloai = rs.getString("maloaisp");
+                String mancc = rs.getString("mancc");
                 int soluong = rs.getInt("soluong");
                 long dongia = rs.getLong("dongia");
                 String img = rs.getString("img");
-                kq = new sanPham(masp, tensp, maloai, soluong, dongia, img);
+                kq = new sanPham(masp, tensp, maloai, mancc, soluong, dongia, img);
             }
             Connect.closeConnection(conn);
         } catch (SQLException e) {
@@ -202,6 +214,7 @@ public class DALsanPham implements DALinterface<sanPham> {
         ArrayList<sanPham> sps = new ArrayList<>();
         try {
             Connection conn = Connect.getConnection();
+            ensureSupplierColumn(conn);
             String sql = "select * from sanpham where " + condition;
             PreparedStatement pst = conn.prepareStatement(sql);
             ResultSet rs = pst.executeQuery();
@@ -209,10 +222,11 @@ public class DALsanPham implements DALinterface<sanPham> {
                 String masp = rs.getString("masp");
                 String tensp = rs.getString("tensp");
                 String maloai = rs.getString("maloaisp");
+                String mancc = rs.getString("mancc");
                 int soluong = rs.getInt("soluong");
                 long dongia = rs.getLong("dongia");
                 String img = rs.getString("img");
-                sanPham sp = new sanPham(masp, tensp, maloai, soluong, dongia, img);
+                sanPham sp = new sanPham(masp, tensp, maloai, mancc, soluong, dongia, img);
                 sps.add(sp);
             }
             Connect.closeConnection(conn);
@@ -220,6 +234,17 @@ public class DALsanPham implements DALinterface<sanPham> {
             System.out.println(e);
         }
         return sps;
+    }
+
+    private void ensureSupplierColumn(Connection con) throws SQLException {
+        try (ResultSet cols = con.getMetaData().getColumns(null, null, "sanpham", "mancc")) {
+            if (cols.next()) {
+                return;
+            }
+        }
+        try (PreparedStatement pst = con.prepareStatement("ALTER TABLE sanpham ADD COLUMN mancc varchar(255) NULL")) {
+            pst.executeUpdate();
+        }
     }
 
 }

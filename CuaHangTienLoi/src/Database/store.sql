@@ -74,11 +74,13 @@ CREATE TABLE `sanpham` (
   `masp` varchar(255) NOT NULL,
   `tensp` varchar(255) NOT NULL,
   `maloaisp` varchar(255) NOT NULL,
+  `mancc` varchar(255) DEFAULT NULL,
   `soluong` int NOT NULL,
   `dongia` int NOT NULL,
   `img` varchar(255) NOT NULL,
   PRIMARY KEY (`masp`),
-  KEY `maloaisp` (`maloaisp`)
+  KEY `maloaisp` (`maloaisp`),
+  KEY `mancc` (`mancc`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `ctphieunhap` (
@@ -115,12 +117,12 @@ CREATE TABLE `cthoadon` (
 INSERT INTO `khachhang` (`makh`, `ten`, `sdt`, `email`) VALUES
 ('kh001', 'Thao Nguyen', '0989879098', 'Thao@gmail.com'),
 ('kh002', 'Khang Minh', '0987876876', 'khan22222g3333@gmail.com'),
-('khang345', 'mKhang', '0987886987', 'khang2222@gmail.com'),
-('khanghaha', 'khanghihih', '0987987876', 'khangha@gmail.com'),
-('Tan5', 'Tan3', '0989876789', 'khang34@gmail.com'),
-('Tan879', 'TanHaha', '0987987987', 'Tan34@gmail.com'),
-('Thanh44444', 'Thanh', '0987987654', 'thanh@gmail.com'),
-('Tuan384', 'Tuan', '0987987098', 'Tuan@gmail.com');
+('kh003', 'mKhang', '0987886987', 'khang2222@gmail.com'),
+('kh004', 'khanghihih', '0987987876', 'khangha@gmail.com'),
+('kh005', 'Tan3', '0989876789', 'khang34@gmail.com'),
+('kh006', 'TanHaha', '0987987987', 'Tan34@gmail.com'),
+('kh007', 'Thanh', '0987987654', 'thanh@gmail.com'),
+('kh008', 'Tuan', '0987987098', 'Tuan@gmail.com');
 
 INSERT INTO `nhanvien` (`manv`, `ho`, `ten`, `gioitinh`, `sdt`, `ngaysinh`, `chucvu`, `luong`) VALUES
 ('nv001', 'Van', 'D', 'Nam', '0987654345', '17/09/1999', 'Quan ly', 11000000),
@@ -139,11 +141,11 @@ INSERT INTO `nhacungcap` (`mancc`, `tenncc`, `tenndd`, `sdt`, `diachi`) VALUES
 ('ncc001', 'Công ty TNHH A', 'Nguyễn A', '0901111222', 'Hà Nội'),
 ('ncc002', 'Công ty TNHH B', 'Trần B', '0903333444', 'Hồ Chí Minh');
 
-INSERT INTO `sanpham` (`masp`, `tensp`, `maloaisp`, `soluong`, `dongia`, `img`) VALUES
-('sp001', 'Bánh mì', 'dm001', 100, 10000, 'img/banhmi.png'),
-('sp002', 'Phở gà', 'dm001', 50, 45000, 'img/pho.png'),
-('sp003', 'Coca Cola', 'dm002', 200, 15000, 'img/cocacola.png'),
-('sp004', 'Sổ tay A5', 'dm003', 150, 12000, 'img/sotay.png');
+INSERT INTO `sanpham` (`masp`, `tensp`, `maloaisp`, `mancc`, `soluong`, `dongia`, `img`) VALUES
+('sp001', 'Bánh mì', 'dm001', 'ncc001', 100, 10000, 'img/banhmi.png'),
+('sp002', 'Phở gà', 'dm001', 'ncc001', 50, 45000, 'img/pho.png'),
+('sp003', 'Coca Cola', 'dm002', 'ncc002', 200, 15000, 'img/cocacola.png'),
+('sp004', 'Sổ tay A5', 'dm003', 'ncc002', 150, 12000, 'img/sotay.png');
 
 INSERT INTO `phieunhap` (`mapn`, `mancc`, `manv`, `ngaytao`, `tongtien`) VALUES
 ('pn001', 'ncc001', 'nv002', '2026-05-01', 500000),
@@ -157,7 +159,7 @@ INSERT INTO `ctphieunhap` (`mapn`, `masp`, `soluong`, `dongia`, `thanhtien`) VAL
 INSERT INTO `hoadon` (`mahd`, `makh`, `manv`, `ngaytao`, `tongtien`) VALUES
 ('hd001', 'kh001', 'nv002', '2026-05-10', 70000),
 ('hd002', 'kh002', 'nv001', '2026-05-12', 30000),
-('hd003', 'khang345', 'nv002', '2026-05-20', 90000);
+('hd003', 'kh003', 'nv002', '2026-05-20', 90000);
 
 INSERT INTO `cthoadon` (`mahd`, `masp`, `soluong`, `dongia`, `thanhtien`) VALUES
 ('hd001', 'sp001', 2, 10000, 20000),
@@ -186,7 +188,8 @@ ALTER TABLE `phieunhap`
   ADD CONSTRAINT `phieunhap_ibfk_2` FOREIGN KEY (`manv`) REFERENCES `nhanvien` (`manv`) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 ALTER TABLE `sanpham`
-  ADD CONSTRAINT `sanpham_ibfk_1` FOREIGN KEY (`maloaisp`) REFERENCES `danhmuc` (`maloai`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `sanpham_ibfk_1` FOREIGN KEY (`maloaisp`) REFERENCES `danhmuc` (`maloai`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `sanpham_ibfk_2` FOREIGN KEY (`mancc`) REFERENCES `nhacungcap` (`mancc`) ON UPDATE CASCADE;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

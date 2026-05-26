@@ -2,28 +2,28 @@ package GUI;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerDateModel;
-import java.util.Date;
-import java.text.SimpleDateFormat;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.JSplitPane;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.SpinnerDateModel;
+import javax.swing.table.DefaultTableModel;
 
 import Database.Connect;
 
@@ -98,6 +98,9 @@ public class DoanhThuWorkspace extends JPanel {
         JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, center, new JScrollPane(tblDetail));
         split.setResizeWeight(0.6);
         add(split, BorderLayout.CENTER);
+
+        initDateRangeFromInvoices();
+        refreshDashboard();
     }
 
     public void refreshDashboard() {
@@ -109,6 +112,11 @@ public class DoanhThuWorkspace extends JPanel {
         loadTopProducts(from, to);
         loadTopCategories(from, to);
         loadDetails(from, to);
+    }
+
+    public void reloadAllInvoicesDashboard() {
+        initDateRangeFromInvoices();
+        refreshDashboard();
     }
 
     private void loadTimeSeries(String from, String to, String gran) {
@@ -183,6 +191,37 @@ public class DoanhThuWorkspace extends JPanel {
         try (Connection c = Connect.getConnection(); PreparedStatement pst = c.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
             while (rs.next()) detailModel.addRow(new Object[] { rs.getString("mahd"), rs.getString("ngaytao"), rs.getString("makh"), rs.getString("manv"), rs.getLong("tongtien") });
         } catch (Exception ex) { ex.printStackTrace(); }
+    }
+
+    private void initDateRangeFromInvoices() {
+        String sql = "SELECT MIN(ngaytao) AS from_date, MAX(ngaytao) AS to_date FROM hoadon";
+        try (Connection c = Connect.getConnection();
+             PreparedStatement pst = c.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+            if (rs.next()) {
+                Date fromDate = parseDate(rs.getString("from_date"));
+                Date toDate = parseDate(rs.getString("to_date"));
+                if (fromDate != null) {
+                    spFrom.setValue(fromDate);
+                }
+                if (toDate != null) {
+                    spTo.setValue(toDate);
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private Date parseDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return dateFmt.parse(value);
+        } catch (ParseException ex) {
+            return null;
+        }
     }
 
     private void exportTimeSeriesCsv() {

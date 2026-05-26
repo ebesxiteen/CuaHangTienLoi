@@ -47,7 +47,7 @@ public class DALnhanVien implements DALinterface<nhanVien> {
             Connection con = Connect.getConnection();
             String sql = "UPDATE nhanvien "
                     + "SET "
-                    + ",ho=? "
+                    + "ho=? "
                     + ",ten=? "
                     + ",gioitinh=? "
                     + ",sdt=? "

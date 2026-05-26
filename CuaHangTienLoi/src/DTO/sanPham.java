@@ -13,6 +13,7 @@ public class sanPham {
     private String tensp;
     private int soluong;
     private String maloaisp;
+    private String mancc;
     private long dongia;
     private String img;
 
@@ -26,6 +27,10 @@ public class sanPham {
     
     public String getMaloaisp() {
         return maloaisp;
+    }
+
+    public String getMancc() {
+        return mancc;
     }
 
     public long getDongia() {
@@ -46,6 +51,10 @@ public class sanPham {
     
     public void setMaloaisp(String maloaisp) {
         this.maloaisp = maloaisp;
+    }
+
+    public void setMancc(String mancc) {
+        this.mancc = mancc;
     }
 
     public void setImg(String img) {
@@ -69,17 +78,22 @@ public class sanPham {
     }
     
     public sanPham(String masp, String tensp, String maloaisp, int soluong, long dongia, String img) {
+        this(masp, tensp, maloaisp, null, soluong, dongia, img);
+    }
+
+    public sanPham(String masp, String tensp, String maloaisp, String mancc, int soluong, long dongia, String img) {
         this.masp = masp;
         this.tensp = tensp;
         this.soluong = soluong;
         this.maloaisp = maloaisp;
+        this.mancc = mancc;
         this.dongia = dongia;
         this.img = img;
     }
     
     @Override
     public String toString() {
-        return "sanPham{" + "masp=" + masp + ", tensp=" + tensp + ", soluong=" + soluong + ", maloaisp=" + maloaisp + ", dongia=" + dongia + ", img=" + img + '}';
+        return "sanPham{" + "masp=" + masp + ", tensp=" + tensp + ", soluong=" + soluong + ", maloaisp=" + maloaisp + ", mancc=" + mancc + ", dongia=" + dongia + ", img=" + img + '}';
     }
 
     

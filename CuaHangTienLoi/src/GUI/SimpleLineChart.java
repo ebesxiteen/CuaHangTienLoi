@@ -1,13 +1,14 @@
 package GUI;
 
-import javax.swing.JPanel;
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.BasicStroke;
-import java.awt.Font;
 import java.awt.RenderingHints;
 import java.util.ArrayList;
+
+import javax.swing.JPanel;
 
 public class SimpleLineChart extends JPanel {
     private ArrayList<String> labels = new ArrayList<>();

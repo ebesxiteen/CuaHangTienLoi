@@ -32,7 +32,9 @@ import javax.swing.table.DefaultTableModel;
 
 import BLL.DanhMucBLL;
 import BLL.SanPhamBLL;
+import DAL.DALnhaCungCap;
 import DTO.DanhMuc;
+import DTO.nhaCungCap;
 import DTO.sanPham;
 
 public class SanPhamView extends javax.swing.JPanel {
@@ -41,19 +43,22 @@ public class SanPhamView extends javax.swing.JPanel {
     private sanPham sp;
     private ArrayList<sanPham> list = new ArrayList<>();
     private ArrayList<DanhMuc> listDM = new ArrayList<>();
+    private ArrayList<nhaCungCap> listNCC = new ArrayList<>();
     SanPhamBLL spBLL = new SanPhamBLL(this);
     DanhMucBLL dmBLL = new DanhMucBLL();
+    DALnhaCungCap nccDAL = DALnhaCungCap.getinstance();
     private int count = -1;
     private int soluong;
     private long dongia;
 
-    private String matmp, tentmp, soluongtmp, dongiatmp, imgtmp;
+    private String matmp, tentmp, maloaitmp, mancctmp, soluongtmp, dongiatmp, imgtmp;
     private File selectFile;
     private Icon icontmp;
     private String selectedImagePath;
     private JComboBox<String> cboMaSPFilter;
     private JComboBox<String> cboTenSPFilter;
     private JComboBox<String> cboMaLoaiFilter;
+    private JComboBox<String> cboMaNCCFilter;
     private boolean updatingFilters;
 
 
@@ -65,12 +70,13 @@ public class SanPhamView extends javax.swing.JPanel {
         ma_sp.setEditable(false);
         ten_sp.setEditable(false);
         maloai_sp.setEnabled(false);
+        mancc_sp.setEnabled(false);
         soluong_sp.setEditable(false);
         dongia_sp.setEditable(false);
         btn_chonanh.setEnabled(false);
 
         model = new DefaultTableModel(new Object[]{
-            "Mã sản phẩm", "Tên sản phẩm", "Mã loại", "Số lượng", "Đơn giá", "Ảnh minh họa"
+            "Mã sản phẩm", "Tên sản phẩm", "Mã loại", "Mã NCC", "Số lượng", "Đơn giá", "Ảnh minh họa"
         }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -101,13 +107,15 @@ public class SanPhamView extends javax.swing.JPanel {
                         Object data4 = table_sp.getValueAt(selectRow, 3);
                         Object data5 = table_sp.getValueAt(selectRow, 4);
                         Object data6 = table_sp.getValueAt(selectRow, 5);
+                        Object data7 = table_sp.getValueAt(selectRow, 6);
 
                         ma_sp.setText(data1.toString());
                         ten_sp.setText(data2.toString());
                         maloai_sp.setSelectedItem(data3.toString());
-                        soluong_sp.setText(data4.toString());
-                        dongia_sp.setText(data5.toString());
-                        String imagePath = data6.toString();
+                        mancc_sp.setSelectedItem(data4 == null ? "" : data4.toString());
+                        soluong_sp.setText(data5.toString());
+                        dongia_sp.setText(data6.toString());
+                        String imagePath = data7.toString();
                         selectedImagePath = imagePath;
                         ImageIcon imageIcon = new ImageIcon(imagePath);
                         Image image = imageIcon.getImage().getScaledInstance(image_label.getWidth(), image_label.getHeight(), Image.SCALE_SMOOTH);
@@ -123,7 +131,7 @@ public class SanPhamView extends javax.swing.JPanel {
     public void loadTable(ArrayList<sanPham> list) {
         sanPham sp1 = list.get(list.size() - 1);
         model.addRow(new Object[]{
-            sp1.getMasp(), sp1.getTensp(), sp1.getMaloaisp(), sp1.getSoluong(), sp1.getDongia(), sp1.getImg()
+            sp1.getMasp(), sp1.getTensp(), sp1.getMaloaisp(), sp1.getMancc(), sp1.getSoluong(), sp1.getDongia(), sp1.getImg()
         });
     }
 
@@ -145,37 +153,42 @@ public class SanPhamView extends javax.swing.JPanel {
         model.setRowCount(0);
         for (sanPham row : data) {
             model.addRow(new Object[]{
-                row.getMasp(), row.getTensp(), row.getMaloaisp(), row.getSoluong(), row.getDongia(), row.getImg()
+                row.getMasp(), row.getTensp(), row.getMaloaisp(), row.getMancc(), row.getSoluong(), row.getDongia(), row.getImg()
             });
         }
         table_sp.setModel(model);
     }
 
     private void updateFilterCombos() {
-        if (cboMaSPFilter == null || cboTenSPFilter == null || cboMaLoaiFilter == null) {
+        if (cboMaSPFilter == null || cboTenSPFilter == null || cboMaLoaiFilter == null || cboMaNCCFilter == null) {
             return;
         }
         updatingFilters = true;
         Object selectedMaSP = cboMaSPFilter.getSelectedItem();
         Object selectedTenSP = cboTenSPFilter.getSelectedItem();
         Object selectedMaLoai = cboMaLoaiFilter.getSelectedItem();
+        Object selectedMaNCC = cboMaNCCFilter.getSelectedItem();
 
         cboMaSPFilter.removeAllItems();
         cboTenSPFilter.removeAllItems();
         cboMaLoaiFilter.removeAllItems();
+        cboMaNCCFilter.removeAllItems();
         cboMaSPFilter.addItem("Tất cả mã SP");
         cboTenSPFilter.addItem("Tất cả tên SP");
         cboMaLoaiFilter.addItem("Tất cả mã loại");
+        cboMaNCCFilter.addItem("Tất cả mã NCC");
 
         for (sanPham item : list) {
             addUniqueComboItem(cboMaSPFilter, item.getMasp());
             addUniqueComboItem(cboTenSPFilter, item.getTensp());
             addUniqueComboItem(cboMaLoaiFilter, item.getMaloaisp());
+            addUniqueComboItem(cboMaNCCFilter, item.getMancc());
         }
 
         restoreComboSelection(cboMaSPFilter, selectedMaSP, 0);
         restoreComboSelection(cboTenSPFilter, selectedTenSP, 0);
         restoreComboSelection(cboMaLoaiFilter, selectedMaLoai, 0);
+        restoreComboSelection(cboMaNCCFilter, selectedMaNCC, 0);
         updatingFilters = false;
     }
 
@@ -210,11 +223,13 @@ public class SanPhamView extends javax.swing.JPanel {
         String selectedMaSP = String.valueOf(cboMaSPFilter.getSelectedItem());
         String selectedTenSP = String.valueOf(cboTenSPFilter.getSelectedItem());
         String selectedMaLoai = String.valueOf(cboMaLoaiFilter.getSelectedItem());
+        String selectedMaNCC = String.valueOf(cboMaNCCFilter.getSelectedItem());
         String keyword = jTextField1.getText().trim().toLowerCase();
 
         boolean filterMaSP = selectedMaSP != null && !"Tất cả mã SP".equals(selectedMaSP);
         boolean filterTenSP = selectedTenSP != null && !"Tất cả tên SP".equals(selectedTenSP);
         boolean filterMaLoai = selectedMaLoai != null && !"Tất cả mã loại".equals(selectedMaLoai);
+        boolean filterMaNCC = selectedMaNCC != null && !"Tất cả mã NCC".equals(selectedMaNCC);
         boolean filterKeyword = !keyword.isEmpty();
 
         ArrayList<sanPham> result = new ArrayList<>();
@@ -222,11 +237,13 @@ public class SanPhamView extends javax.swing.JPanel {
             boolean matchesMaSP = !filterMaSP || selectedMaSP.equals(item.getMasp());
             boolean matchesTenSP = !filterTenSP || selectedTenSP.equals(item.getTensp());
             boolean matchesMaLoai = !filterMaLoai || selectedMaLoai.equals(item.getMaloaisp());
+            boolean matchesMaNCC = !filterMaNCC || selectedMaNCC.equals(item.getMancc());
             boolean matchesKeyword = !filterKeyword
                     || containsKeyword(item.getMasp(), keyword)
                     || containsKeyword(item.getTensp(), keyword)
-                    || containsKeyword(item.getMaloaisp(), keyword);
-            if (matchesMaSP && matchesTenSP && matchesMaLoai && matchesKeyword) {
+                    || containsKeyword(item.getMaloaisp(), keyword)
+                    || containsKeyword(item.getMancc(), keyword);
+            if (matchesMaSP && matchesTenSP && matchesMaLoai && matchesMaNCC && matchesKeyword) {
                 result.add(item);
             }
         }
@@ -244,6 +261,9 @@ public class SanPhamView extends javax.swing.JPanel {
         if (maloai_sp.getItemCount() > 0) {
             maloai_sp.setSelectedIndex(0);
         }
+        if (mancc_sp.getItemCount() > 0) {
+            mancc_sp.setSelectedIndex(0);
+        }
         soluong_sp.setText("");
         dongia_sp.setText("");
         image_label.setIcon(null);
@@ -253,6 +273,7 @@ public class SanPhamView extends javax.swing.JPanel {
 
     public void UnEditable() {
         maloai_sp.setEnabled(false);
+        mancc_sp.setEnabled(false);
         btn_luu.setEnabled(false);
         btn_chonanh.setEnabled(false);
         ma_sp.setEditable(false);
@@ -265,6 +286,7 @@ public class SanPhamView extends javax.swing.JPanel {
         soluong_sp.setEditable(true);
         btn_luu.setEnabled(true);
         maloai_sp.setEnabled(true);
+        mancc_sp.setEnabled(true);
         btn_chonanh.setEnabled(true);
         ma_sp.setEditable(false);
         ten_sp.setEditable(true);
@@ -276,6 +298,11 @@ public class SanPhamView extends javax.swing.JPanel {
         maloai_sp.removeAllItems();
         for (DanhMuc dataDM : listDM) {
             maloai_sp.addItem(dataDM.getMaloai());
+        }
+        listNCC = nccDAL.selectAll();
+        mancc_sp.removeAllItems();
+        for (nhaCungCap dataNCC : listNCC) {
+            mancc_sp.addItem(dataNCC.getMaNCC());
         }
     }
 
@@ -363,6 +390,7 @@ public class SanPhamView extends javax.swing.JPanel {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
         image_label = new javax.swing.JLabel();
         btn_chonanh = new javax.swing.JButton();
         ma_sp = new javax.swing.JTextField();
@@ -374,10 +402,12 @@ public class SanPhamView extends javax.swing.JPanel {
         btn_sua = new javax.swing.JButton();
         btn_xoa = new javax.swing.JButton();
         maloai_sp = new javax.swing.JComboBox<>();
+        mancc_sp = new javax.swing.JComboBox<>();
         btn_reset = new javax.swing.JButton();
         cboMaSPFilter = new JComboBox<>();
         cboTenSPFilter = new JComboBox<>();
         cboMaLoaiFilter = new JComboBox<>();
+        cboMaNCCFilter = new JComboBox<>();
 
         jInternalFrame1.setVisible(true);
 
@@ -454,6 +484,7 @@ public class SanPhamView extends javax.swing.JPanel {
         cboMaSPFilter.addActionListener(e -> applyFilters());
         cboTenSPFilter.addActionListener(e -> applyFilters());
         cboMaLoaiFilter.addActionListener(e -> applyFilters());
+        cboMaNCCFilter.addActionListener(e -> applyFilters());
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jLabel2.setText("Mã sản phẩm:");
@@ -472,6 +503,9 @@ public class SanPhamView extends javax.swing.JPanel {
 
         jLabel8.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jLabel8.setText("Hình ảnh:");
+
+        jLabel9.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        jLabel9.setText("Mã nhà cung cấp:");
 
         btn_chonanh.setBackground(new java.awt.Color(204, 204, 204));
         btn_chonanh.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
@@ -571,7 +605,7 @@ public class SanPhamView extends javax.swing.JPanel {
         filterPanel.add(cboMaSPFilter);
         filterPanel.add(cboTenSPFilter);
         filterPanel.add(cboMaLoaiFilter);
-        filterPanel.add(new JLabel(""));
+        filterPanel.add(cboMaNCCFilter);
         filterPanel.add(new JLabel(""));
         filterPanel.add(new JLabel(""));
         tablePanel.add(filterPanel, BorderLayout.NORTH);
@@ -600,9 +634,10 @@ public class SanPhamView extends javax.swing.JPanel {
         addFormRow(infoPanel, gbc, 0, jLabel2, ma_sp);
         addFormRow(infoPanel, gbc, 1, jLabel4, ten_sp);
         addFormRow(infoPanel, gbc, 2, jLabel5, maloai_sp);
-        addFormRow(infoPanel, gbc, 3, jLabel6, soluong_sp);
-        addFormRow(infoPanel, gbc, 4, jLabel7, dongia_sp);
-        addFormRow(infoPanel, gbc, 5, jLabel8, btn_chonanh);
+        addFormRow(infoPanel, gbc, 3, jLabel9, mancc_sp);
+        addFormRow(infoPanel, gbc, 4, jLabel6, soluong_sp);
+        addFormRow(infoPanel, gbc, 5, jLabel7, dongia_sp);
+        addFormRow(infoPanel, gbc, 6, jLabel8, btn_chonanh);
 
         JPanel imagePanel = new JPanel(new BorderLayout());
         imagePanel.setBackground(java.awt.Color.WHITE);
@@ -647,11 +682,12 @@ public class SanPhamView extends javax.swing.JPanel {
                 String ma = ma_sp.getText().trim();
                 String ten = ten_sp.getText().trim();
                 String maloai = (String) maloai_sp.getSelectedItem();
+                String mancc = (String) mancc_sp.getSelectedItem();
                 String soluongTxt = soluong_sp.getText().trim();
                 String dongiaTxt = dongia_sp.getText().trim();
                 String img = selectedImagePath;
 
-                if (img == null || ma.isEmpty() || ten.isEmpty() || soluongTxt.isEmpty() || dongiaTxt.isEmpty()) {
+                if (img == null || ma.isEmpty() || ten.isEmpty() || maloai == null || mancc == null || soluongTxt.isEmpty() || dongiaTxt.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin");
                     return;
                 }
@@ -679,7 +715,7 @@ public class SanPhamView extends javax.swing.JPanel {
                 }
 
                 try {
-                    sp = new sanPham(ma, ten, maloai, soluong, dongia, img);
+                    sp = new sanPham(ma, ten, maloai, mancc, soluong, dongia, img);
                     list.add(sp);
                     spBLL.add(sp);
                     btn_them.setEnabled(true);
@@ -696,11 +732,12 @@ public class SanPhamView extends javax.swing.JPanel {
                 String ma = ma_sp.getText().trim();
                 String ten = ten_sp.getText().trim();
                 String maloai = (String) maloai_sp.getSelectedItem();
+                String mancc = (String) mancc_sp.getSelectedItem();
                 String soluongTxt = soluong_sp.getText().trim();
                 String dongiaTxt = dongia_sp.getText().trim();
                 String img = selectedImagePath;
                 
-                if (matmp.equals(ma) && tentmp.equals(ten) && soluongtmp.equals(soluongTxt) && dongiatmp.equals(dongiaTxt) && img.equals(imgtmp)) {
+                if (matmp.equals(ma) && tentmp.equals(ten) && maloaitmp.equals(maloai) && mancctmp.equals(mancc) && soluongtmp.equals(soluongTxt) && dongiatmp.equals(dongiaTxt) && img.equals(imgtmp)) {
                     int confirm = JOptionPane.showConfirmDialog(this, "Chưa có thông tin nào được sửa đổi, bạn có muốn tiếp tục ?");
                     if (confirm == JOptionPane.YES_OPTION) {
                         return;
@@ -735,7 +772,7 @@ public class SanPhamView extends javax.swing.JPanel {
                 }
 
                 try {
-                    sp = new sanPham(ma, ten, maloai, soluong, dongia, img);
+                    sp = new sanPham(ma, ten, maloai, mancc, soluong, dongia, img);
                     spBLL.update(sp, matmp);
                     ResetFieldText();
                     UnEditable();
@@ -756,6 +793,8 @@ public class SanPhamView extends javax.swing.JPanel {
         String soluongTxt = soluong_sp.getText();
         matmp = ma_sp.getText();
         tentmp = ten_sp.getText();
+        maloaitmp = String.valueOf(maloai_sp.getSelectedItem());
+        mancctmp = String.valueOf(mancc_sp.getSelectedItem());
         dongiatmp = dongia_sp.getText();
         soluongtmp = soluong_sp.getText();
         icontmp = image_label.getIcon();
@@ -774,6 +813,7 @@ public class SanPhamView extends javax.swing.JPanel {
         String ten = ten_sp.getText();
         String dongiaTxt = dongia_sp.getText();
         String maloaisp = (String) maloai_sp.getSelectedItem();
+        String mancc = (String) mancc_sp.getSelectedItem();
         String soluongTxt = soluong_sp.getText();
         if (ma.isEmpty() && ten.isEmpty() && dongiaTxt.isEmpty() && selectedImagePath == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn đối tượng cần xóa");
@@ -784,7 +824,7 @@ public class SanPhamView extends javax.swing.JPanel {
                 if (confirm == JOptionPane.YES_OPTION) {
                     int soluong = Integer.parseInt(soluongTxt);
                     long dongiasp = Long.parseLong(dongiaTxt);
-                    sp = new sanPham(ma, ten, maloaisp, soluong, dongiasp, selectedImagePath);
+                    sp = new sanPham(ma, ten, maloaisp, mancc, soluong, dongiasp, selectedImagePath);
                     list.remove(sp);
                     spBLL.delete(sp);
                     ResetFieldText();
@@ -835,6 +875,9 @@ public class SanPhamView extends javax.swing.JPanel {
         if (cboMaLoaiFilter != null) {
             cboMaLoaiFilter.setSelectedIndex(0);
         }
+        if (cboMaNCCFilter != null) {
+            cboMaNCCFilter.setSelectedIndex(0);
+        }
         UnEditable();
         if (btn_luu.isEnabled()) {
             btn_luu.setEnabled(false);
@@ -869,10 +912,12 @@ public class SanPhamView extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField jTextField1;
     public javax.swing.JTextField ma_sp;
     public javax.swing.JComboBox<String> maloai_sp;
+    public javax.swing.JComboBox<String> mancc_sp;
     public javax.swing.JTextField soluong_sp;
     public javax.swing.JTable table_sp;
     public javax.swing.JTextField ten_sp;

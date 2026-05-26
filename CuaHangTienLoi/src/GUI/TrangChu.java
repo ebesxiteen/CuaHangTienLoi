@@ -3,32 +3,43 @@ package GUI;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JFrame;
 
 public class TrangChu extends JFrame{
     CardLayout cardlayout;
     private boolean isMenuVisible;
-    NhanVienView nvView = new NhanVienView();
-    SanPhamView spView = new SanPhamView();
-    KhachHangView khView = new KhachHangView();
-    NhaCungCap nccView = new NhaCungCap();
-    DanhMuc dmView = new DanhMuc(); 
-    phieuNhap pnView = new phieuNhap();
-    HoaDonWorkspace hdView = new HoaDonWorkspace();
-    DoanhThuWorkspace doanhThuView = new DoanhThuWorkspace();
-    TaiKhoan tkView = new TaiKhoan();
+    private Set<String> addedViews = new HashSet<>();
+    private String currentUsername;
+    private int loginStatus;
+    NhanVienView nvView;
+    SanPhamView spView;
+    KhachHangView khView;
+    NhaCungCap nccView;
+    DanhMuc dmView; 
+    phieuNhap pnView;
+    HoaDonWorkspace hdView;
+    DoanhThuWorkspace doanhThuView;
+    TaiKhoan tkView;
     
     public TrangChu(String username) {
+        this(username, 1);
+    }
+
+    public TrangChu(String username, int status) {
+        this.currentUsername = username;
+        this.loginStatus = status;
         initComponents();
     }
     
     public void ClearTableALL() {
-        nvView.clearTable();
-        spView.clearTable();
-        khView.clearTable();
-        nccView.clearTable();
-        dmView.clearTable();
+        if (nvView != null) nvView.clearTable();
+        if (spView != null) spView.clearTable();
+        if (khView != null) khView.clearTable();
+        if (nccView != null) nccView.clearTable();
+        if (dmView != null) dmView.clearTable();
     }
 
     @SuppressWarnings("unchecked")
@@ -59,16 +70,7 @@ public class TrangChu extends JFrame{
         cardlayout = new CardLayout();
         Pane_content.setLayout(cardlayout);
         
-        Pane_content.add(nvView,"QL Nhân Viên");
-        Pane_content.add(spView,"QL Sản Phẩm");
-        Pane_content.add(khView,"QL Khách Hàng");
-        Pane_content.add(pnView,"Phiếu Nhập");
-        Pane_content.add(nccView,"Nhà Cung Cấp");
-        Pane_content.add(dmView,"Danh Mục");
-        Pane_content.add(doanhThuView, "Doanh Thu");
-        // Add invoice workspace
-        Pane_content.add(hdView, "Hóa Đơn");
-        Pane_content.add(tkView, "Tài Khoản");
+        // Views are lazily created when menu items are clicked to avoid startup errors
        
         isMenuVisible = true;
         Pane_content.setVisible(isMenuVisible);
@@ -104,6 +106,8 @@ public class TrangChu extends JFrame{
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 // Hiển thị panel Hóa Đơn
+                if (hdView == null) hdView = new HoaDonWorkspace();
+                if (!addedViews.contains("Hóa Đơn")) { Pane_content.add(hdView, "Hóa Đơn"); addedViews.add("Hóa Đơn"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -138,6 +142,9 @@ public class TrangChu extends JFrame{
         pDanhMuc.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                // lazy init
+                if (dmView == null) dmView = new DanhMuc();
+                if (!addedViews.contains("Danh Mục")) { Pane_content.add(dmView, "Danh Mục"); addedViews.add("Danh Mục"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -174,6 +181,8 @@ public class TrangChu extends JFrame{
         pSanPham.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (spView == null) spView = new SanPhamView();
+                if (!addedViews.contains("QL Sản Phẩm")) { Pane_content.add(spView, "QL Sản Phẩm"); addedViews.add("QL Sản Phẩm"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -209,13 +218,14 @@ public class TrangChu extends JFrame{
         pDoanhThu.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Minimal: hiển thị hộp thông báo hoặc chuyển tới Hóa Đơn (có thể implement báo cáo sau)
+                if (doanhThuView == null) doanhThuView = new DoanhThuWorkspace();
+                if (!addedViews.contains("Doanh Thu")) { Pane_content.add(doanhThuView, "Doanh Thu"); addedViews.add("Doanh Thu"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
                 // Show Doanh Thu workspace
                 cardlayout.show(Pane_content, "Doanh Thu");
-                doanhThuView.refreshDashboard();
+                doanhThuView.reloadAllInvoicesDashboard();
             }
 
             @Override
@@ -246,6 +256,8 @@ public class TrangChu extends JFrame{
         pNhanVien.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (nvView == null) nvView = new NhanVienView();
+                if (!addedViews.contains("QL Nhân Viên")) { Pane_content.add(nvView, "QL Nhân Viên"); addedViews.add("QL Nhân Viên"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -279,6 +291,8 @@ public class TrangChu extends JFrame{
         pNhaCC.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (nccView == null) nccView = new NhaCungCap();
+                if (!addedViews.contains("Nhà Cung Cấp")) { Pane_content.add(nccView, "Nhà Cung Cấp"); addedViews.add("Nhà Cung Cấp"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -314,6 +328,8 @@ public class TrangChu extends JFrame{
         pQuanLy.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (khView == null) khView = new KhachHangView();
+                if (!addedViews.contains("QL Khách Hàng")) { Pane_content.add(khView, "QL Khách Hàng"); addedViews.add("QL Khách Hàng"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -349,6 +365,8 @@ public class TrangChu extends JFrame{
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 // Hiển thị module Quản lý Tài Khoản
+                if (tkView == null) tkView = new TaiKhoan();
+                if (!addedViews.contains("Tài Khoản")) { Pane_content.add(tkView, "Tài Khoản"); addedViews.add("Tài Khoản"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -408,35 +426,46 @@ public class TrangChu extends JFrame{
         labelY = (pHoaDon.getHeight() - lDangXuat.getPreferredSize().height) / 2;
         lDangXuat.setBounds(labelX, labelY, lDangXuat.getPreferredSize().width, lDangXuat.getPreferredSize().height);
 
+        if (loginStatus != 0) {
+            pNhaCC.setBounds(0, 275, 200, 50);
+            pQuanLy.setBounds(0, 325, 200, 50);
+            pDangXuat.setBounds(0, 375, 200, 50);
+        }
 
         MenuPanel.add(pHoaDon);
         MenuPanel.add(pDanhMuc);
         MenuPanel.add(pSanPham);
         MenuPanel.add(pDoanhThu);
-        MenuPanel.add(pNhanVien);
         MenuPanel.add(pQuanLy);
         MenuPanel.add(pNhaCC);
+        if (loginStatus == 0) {
+            MenuPanel.add(pNhanVien);
+            MenuPanel.add(pTaiKhoan);
+        }
         MenuPanel.add(pDangXuat);
-        MenuPanel.add(pTaiKhoan);
         
         pHoaDon.setFocusable(true);
         pDanhMuc.setFocusable(true);
         pSanPham.setFocusable(true);
         pDoanhThu.setFocusable(true);
-        pNhanVien.setFocusable(true);
         pQuanLy.setFocusable(true);
         pNhaCC.setFocusable(true);
-        pTaiKhoan.setFocusable(true);
+        if (loginStatus == 0) {
+            pNhanVien.setFocusable(true);
+            pTaiKhoan.setFocusable(true);
+        }
         pDangXuat.setFocusable(true);
         
         pHoaDon.add(lHoaDon);
         pDanhMuc.add(lDanhMuc);
         pSanPham.add(lSanPham);
         pDoanhThu.add(lDoanhThu);
-        pNhanVien.add(lNhanVien);
         pQuanLy.add(lQuanLy);
         pNhaCC.add(lNhaCC);
-        pTaiKhoan.add(lTaiKhoan);
+        if (loginStatus == 0) {
+            pNhanVien.add(lNhanVien);
+            pTaiKhoan.add(lTaiKhoan);
+        }
         pDangXuat.add(lDangXuat);
         
         
