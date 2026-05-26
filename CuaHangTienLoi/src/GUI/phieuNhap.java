@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -50,7 +51,7 @@ public class phieuNhap extends JPanel {
         menu.add(sua);
         menu.add(xoa);
         
-        setBackground(new java.awt.Color(64, 164, 156));
+        setBackground(new java.awt.Color(255, 255, 255));
 
         tbPhieuNhap.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -66,15 +67,17 @@ public class phieuNhap extends JPanel {
         jScrollPane1.setViewportView(tbPhieuNhap);
 
         btTimKiem.setText("Tìm kiếm");
+        btTimKiem.setBackground(new java.awt.Color(0, 102, 102));
+        btTimKiem.setForeground(new java.awt.Color(255, 255, 255));
 
         cbSapXep.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tăng dần", "Giảm dần" }));
 
-        lSapXep.setForeground(new java.awt.Color(255, 255, 255));
+        lSapXep.setForeground(new java.awt.Color(0, 102, 102));
         lSapXep.setText("Sắp xếp:");
 
         cbLoc.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Mã phiếu nhập", "Mã nhà cung cấp", "Mã nhân viên", "Ngày tạo", "Tổng tiền", " " }));
 
-        lLoc.setForeground(new java.awt.Color(255, 255, 255));
+        lLoc.setForeground(new java.awt.Color(0, 102, 102));
         lLoc.setText("Lọc theo:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

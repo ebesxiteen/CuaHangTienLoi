@@ -161,11 +161,13 @@ public class DALuser implements DALinterface<user>{
                     + "SET "
                     + "username=? "
                     + ",password=? "
+                    + ",status=? "
                     + "WHERE username = ?";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setString(1, t.getUsername());
             pst.setString(2, t.getPassword());
-            pst.setString(3, maOld);
+            pst.setInt(3, t.getStatus());
+            pst.setString(4, maOld);
 
             kq = pst.executeUpdate();
 

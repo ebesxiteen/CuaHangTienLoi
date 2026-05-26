@@ -5,26 +5,34 @@
 package BLL;
 
 
+import java.awt.Component;
 import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
 import DAL.DALDanhMuc;
-import GUI.DanhMuc;
 
 
 public class DanhMucBLL implements BLLinterface<DTO.DanhMuc>{
     
-    private DanhMuc dmView;
+    private Component dmView;
     private DALDanhMuc daldm = new DALDanhMuc();
     private ArrayList<DTO.DanhMuc> list = new ArrayList<>();
 
-    public DanhMucBLL(DanhMuc dm) {
+    public DanhMucBLL(Component dm) {
         this.dmView = dm;
     }
 
     public DanhMucBLL() {
      
+    }
+
+    private void showMsg(String msg) {
+        if (dmView != null) {
+            JOptionPane.showMessageDialog(dmView, msg);
+        } else {
+            JOptionPane.showMessageDialog(null, msg);
+        }
     }
     
     public ArrayList<DTO.DanhMuc> getALL() {
@@ -41,14 +49,14 @@ public class DanhMucBLL implements BLLinterface<DTO.DanhMuc>{
             }
         }
         if (flag) {
-            JOptionPane.showMessageDialog(dmView, "Mã loại đã tồn tại");
+            showMsg("Mã loại đã tồn tại");
             return;
         }
         try {
-            if (daldm.insert(dm) > 0) {
-                JOptionPane.showMessageDialog(dmView, "Thêm thành công");
+                if (daldm.insert(dm) > 0) {
+                showMsg("Thêm thành công");
             } else {
-                JOptionPane.showMessageDialog(dmView, "Thêm thất bại");
+                showMsg("Thêm thất bại");
             }
         } catch (Exception ex) {
             System.out.println(ex);
@@ -58,10 +66,10 @@ public class DanhMucBLL implements BLLinterface<DTO.DanhMuc>{
     @Override
     public void delete(DTO.DanhMuc dm) {
          try {
-             if (daldm.delete(dm) > 0) {
-                JOptionPane.showMessageDialog(dmView, "Xóa thành công");
+                if (daldm.delete(dm) > 0) {
+                showMsg("Xóa thành công");
              } else {
-                 JOptionPane.showMessageDialog(dmView, "Xóa thất bại");
+                 showMsg("Xóa thất bại");
              }
          } catch (Exception ex) {
              System.out.println(ex);
@@ -81,17 +89,29 @@ public class DanhMucBLL implements BLLinterface<DTO.DanhMuc>{
             }
         }
         if (found) {
-            JOptionPane.showMessageDialog(dmView, "Mã loại đã tồn tại");
+            showMsg("Mã loại đã tồn tại");
         } else {
             try {
                 if (daldm.updateALL(dm, maOld) > 0) {
-                    JOptionPane.showMessageDialog(dmView, "Sửa thành công");
+                    showMsg("Sửa thành công");
                 } else {
-                    JOptionPane.showMessageDialog(dmView, "Sửa thất bại");
+                    showMsg("Sửa thất bại");
                 }
             } catch (Exception ex) {
                 System.out.println(ex);
             }
+        }
+    }
+
+    public void update(DTO.DanhMuc dm) {
+        try {
+            if (daldm.update(dm) > 0) {
+                showMsg("Sửa thành công");
+            } else {
+                showMsg("Sửa thất bại");
+            }
+        } catch (Exception ex) {
+            System.out.println(ex);
         }
     }
     

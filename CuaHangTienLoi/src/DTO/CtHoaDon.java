@@ -9,13 +9,13 @@ package DTO;
  * @author votru
  */
 public class CtHoaDon {
-    private int mahd;
-    private int masp;
+    private String mahd;
+    private String masp;
     private int soluong;
     private int dongia;
     private int thanhtien;
 
-    public CtHoaDon(int mahd, int masp, int soluong, int dongia, int thanhtien) {
+    public CtHoaDon(String mahd, String masp, int soluong, int dongia, int thanhtien) {
         this.mahd = mahd;
         this.masp = masp;
         this.soluong = soluong;
@@ -23,11 +23,11 @@ public class CtHoaDon {
         this.thanhtien = thanhtien;
     }
 
-    public int getMahd() {
+    public String getMahd() {
         return mahd;
     }
 
-    public int getMasp() {
+    public String getMasp() {
         return masp;
     }
 
@@ -43,11 +43,11 @@ public class CtHoaDon {
         return thanhtien;
     }
 
-    public void setMahd(int mahd) {
+    public void setMahd(String mahd) {
         this.mahd = mahd;
     }
 
-    public void setMasp(int masp) {
+    public void setMasp(String masp) {
         this.masp = masp;
     }
 

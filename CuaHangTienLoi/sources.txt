@@ -1,5 +1,6 @@
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\BLL\BLLinterface.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\BLL\DanhMucBLL.java
+C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\BLL\HoaDonBLL.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\BLL\KhachHangBLL.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\BLL\LoginoutBLL.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\BLL\NhaCungCapBLL.java
@@ -26,8 +27,10 @@ C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\DTO\sanPham.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\DTO\user.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\CTHoaDon.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\DanhMuc.java
+C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\DoanhThuWorkspace.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\FrameLogin.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\HoaDon.java
+C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\HoaDonWorkspace.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\KhachHangView.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\NhaCungCap.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\NhanVienView.java
@@ -35,6 +38,7 @@ C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\PanelBorder.j
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\phieuNhap.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\SanPhamView.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\ShowInfo.java
+C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\SimpleLineChart.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\Start.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\TaiKhoan.java
 C:\Users\ebesxiteen\git\CHTL\CuaHangTienLoi\CuaHangTienLoi\src\GUI\test.java

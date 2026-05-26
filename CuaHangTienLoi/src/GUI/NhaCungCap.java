@@ -1,20 +1,35 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package GUI;
-import javax.swing.JLabel;
-import javax.swing.table.DefaultTableModel;
-import BLL.NhaCungCapBLL;
-import java.util.ArrayList;
-import javax.swing.table.DefaultTableCellRenderer;
-import DTO.nhaCungCap;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
-
+import BLL.NhaCungCapBLL;
+import DTO.nhaCungCap;
 
 public class NhaCungCap extends javax.swing.JPanel {
     DefaultTableModel model;
@@ -22,323 +37,230 @@ public class NhaCungCap extends javax.swing.JPanel {
     private ArrayList<nhaCungCap> list = new ArrayList<>();
     NhaCungCapBLL khBll = new NhaCungCapBLL(this);
     private int count = 0;
-    private String matmp, tentmp,tennddtmp, sdttmp, dchitmp;
+    private String matmp, tentmp, tennddtmp, sdttmp, dchitmp;
+    private boolean updatingFilters;
+
+    public javax.swing.JButton btn_luu;
+    public javax.swing.JButton btn_reset;
+    public javax.swing.JButton btn_sua;
+    public javax.swing.JButton btn_them;
+    public javax.swing.JButton btn_xoa;
+    public javax.swing.JTextField dchi_ncc;
+    public javax.swing.JTextField ma_ncc;
+    public javax.swing.JTextField sdt_ncc;
+    public javax.swing.JTable table_ncc;
+    public javax.swing.JTextField ten_ncc;
+    public javax.swing.JTextField ten_ndd;
+
+    private JButton btnSearch;
+    private JTextField txtSearch;
+    private JComboBox<String> cboMaNCCFilter;
+    private JComboBox<String> cboTenNCCFilter;
+    private JComboBox<String> cboSdtFilter;
+
     public NhaCungCap() {
         initComponents();
         btn_luu.setEnabled(false);
-        ma_ncc.setEditable(false);
-        ten_ncc.setEditable(false);
-        sdt_ncc.setEditable(false);
-        dchi_ncc.setEditable(false);
+        UnEditable();
+        wireEvents();
+    }
 
-        model = (DefaultTableModel) table_ncc.getModel();
+    private void initComponents() {
+        setLayout(new BorderLayout(10, 10));
+        setBackground(Color.WHITE);
+        setPreferredSize(new Dimension(1015, 690));
 
-        model.setColumnIdentifiers(new Object[]{
+        JLabel title = new JLabel("QUẢN LÝ NHÀ CUNG CẤP");
+        title.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
+        title.setForeground(new Color(0, 102, 102));
+
+        txtSearch = new JTextField();
+        btnSearch = new JButton("Tìm kiếm");
+        btnSearch.setBackground(new Color(0, 102, 102));
+        btnSearch.setForeground(Color.WHITE);
+        btnSearch.setBorderPainted(false);
+        txtSearch.setPreferredSize(new Dimension(240, 28));
+        btnSearch.setPreferredSize(new Dimension(100, 28));
+
+        JPanel searchPanel = new JPanel(new BorderLayout(6, 0));
+        searchPanel.setBackground(Color.WHITE);
+        searchPanel.add(txtSearch, BorderLayout.CENTER);
+        searchPanel.add(btnSearch, BorderLayout.EAST);
+
+        JPanel titlePanel = new JPanel(new BorderLayout(8, 0));
+        titlePanel.setBackground(Color.WHITE);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
+        titlePanel.add(title, BorderLayout.WEST);
+        titlePanel.add(searchPanel, BorderLayout.EAST);
+        add(titlePanel, BorderLayout.NORTH);
+
+        model = new DefaultTableModel(new Object[]{
             "Mã nhà cung cấp", "Tên nhà cung cấp", "Tên người đại diện", "Số điện thoại", "Địa chỉ"
-        });
+        }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table_ncc = new JTable(model);
+        table_ncc.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table_ncc.setRowSelectionAllowed(true);
+        table_ncc.setCellSelectionEnabled(false);
+        table_ncc.setRowHeight(28);
+        table_ncc.getTableHeader().setResizingAllowed(false);
+        table_ncc.getTableHeader().setReorderingAllowed(false);
+        table_ncc.setDefaultEditor(Object.class, null);
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-
         for (int i = 0; i < table_ncc.getColumnModel().getColumnCount(); i++) {
             table_ncc.getColumnModel().getColumn(i).setHeaderRenderer(centerRenderer);
             table_ncc.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        MouseAdapter mouseAdapter = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (SwingUtilities.isLeftMouseButton(e)) {
-                    int selectRow = table_ncc.getSelectedRow();
+        cboMaNCCFilter = new JComboBox<>();
+        cboTenNCCFilter = new JComboBox<>();
+        cboSdtFilter = new JComboBox<>();
+        JPanel filterPanel = new JPanel(new GridLayout(1, 5, 0, 0));
+        filterPanel.setBackground(Color.WHITE);
+        filterPanel.add(cboMaNCCFilter);
+        filterPanel.add(cboTenNCCFilter);
+        filterPanel.add(cboSdtFilter);
+        filterPanel.add(new JLabel(""));
+        filterPanel.add(new JLabel(""));
 
-                    if (selectRow != -1) {
-                        Object data1 = table_ncc.getValueAt(selectRow, 0);
-                        Object data2 = table_ncc.getValueAt(selectRow, 1);
-                        Object data3 = table_ncc.getValueAt(selectRow, 2);
-                        Object data4 = table_ncc.getValueAt(selectRow, 3);
-                        Object data5 = table_ncc.getValueAt(selectRow, 4);
+        JPanel tablePanel = new JPanel(new BorderLayout(8, 8));
+        tablePanel.setBackground(Color.WHITE);
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
+        tablePanel.add(filterPanel, BorderLayout.NORTH);
+        tablePanel.add(new JScrollPane(table_ncc), BorderLayout.CENTER);
+        tablePanel.setMinimumSize(new Dimension(590, 0));
 
-                        ma_ncc.setText(data1.toString());
-                        ten_ncc.setText(data2.toString());
-                        ten_ndd.setText(data3.toString());
-                        sdt_ncc.setText(data4.toString());
-                        dchi_ncc.setText(data5.toString());
-                    }
-                }
-            }
-        };
+        ma_ncc = new JTextField();
+        ten_ncc = new JTextField();
+        ten_ndd = new JTextField();
+        sdt_ncc = new JTextField();
+        dchi_ncc = new JTextField();
 
-        table_ncc.addMouseListener(mouseAdapter);
+        btn_them = new JButton("Thêm");
+        btn_sua = new JButton("Sửa");
+        btn_reset = new JButton("Reset");
+        btn_xoa = new JButton("Xóa");
+        btn_luu = new JButton("Lưu");
+        btn_them.setBackground(new Color(102, 102, 102));
+        btn_sua.setBackground(new Color(102, 102, 102));
+        btn_reset.setBackground(new Color(102, 102, 102));
+        btn_xoa.setBackground(new Color(153, 0, 0));
+        btn_luu.setBackground(new Color(0, 102, 0));
+        btn_them.setForeground(Color.WHITE);
+        btn_sua.setForeground(Color.WHITE);
+        btn_reset.setForeground(Color.WHITE);
+        btn_xoa.setForeground(Color.WHITE);
+        btn_luu.setForeground(Color.WHITE);
+
+        JPanel actionTop = new JPanel(new GridLayout(1, 3, 8, 0));
+        actionTop.setBackground(Color.WHITE);
+        actionTop.setPreferredSize(new Dimension(0, 38));
+        actionTop.add(btn_them);
+        actionTop.add(btn_sua);
+        actionTop.add(btn_reset);
+
+        JPanel infoPanel = new JPanel(new GridBagLayout());
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setBorder(BorderFactory.createTitledBorder("Thông tin nhà cung cấp"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        addFormRow(infoPanel, gbc, 0, "Mã nhà cung cấp:", ma_ncc);
+        addFormRow(infoPanel, gbc, 1, "Tên nhà cung cấp:", ten_ncc);
+        addFormRow(infoPanel, gbc, 2, "Tên người đại diện:", ten_ndd);
+        addFormRow(infoPanel, gbc, 3, "Số điện thoại:", sdt_ncc);
+        addFormRow(infoPanel, gbc, 4, "Địa chỉ:", dchi_ncc);
+
+        JPanel actionBottom = new JPanel(new GridLayout(1, 2, 8, 0));
+        actionBottom.setBackground(Color.WHITE);
+        actionBottom.setPreferredSize(new Dimension(0, 38));
+        actionBottom.add(btn_xoa);
+        actionBottom.add(btn_luu);
+
+        JPanel formPanel = new JPanel(new BorderLayout(8, 8));
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
+        formPanel.setMinimumSize(new Dimension(380, 0));
+        formPanel.add(actionTop, BorderLayout.NORTH);
+        formPanel.add(infoPanel, BorderLayout.CENTER);
+        formPanel.add(actionBottom, BorderLayout.SOUTH);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tablePanel, formPanel);
+        splitPane.setResizeWeight(0.62);
+        splitPane.setDividerLocation(620);
+        splitPane.setBorder(null);
+        add(splitPane, BorderLayout.CENTER);
     }
 
-   
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String label, JTextField field) {
+        gbc.gridy = row;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        panel.add(new JLabel(label), gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        panel.add(field, gbc);
+    }
 
-        jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
-        jTextField1 = new javax.swing.JTextField();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        btn_them = new javax.swing.JButton();
-        btn_luu = new javax.swing.JButton();
-        btn_sua = new javax.swing.JButton();
-        btn_xoa = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        table_ncc = new javax.swing.JTable();
-        sdt_ncc = new javax.swing.JTextField();
-        dchi_ncc = new javax.swing.JTextField();
-        ma_ncc = new javax.swing.JTextField();
-        ten_ncc = new javax.swing.JTextField();
-        btn_reset = new javax.swing.JButton();
-        jLabel7 = new javax.swing.JLabel();
-        ten_ndd = new javax.swing.JTextField();
-
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel1.setPreferredSize(new java.awt.Dimension(980, 650));
-
-        jLabel1.setFont(new java.awt.Font("Sitka Small", 1, 26)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(0, 102, 102));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("QUẢN LÝ NHÀ CUNG CẤP");
-
-        jButton1.setBackground(new java.awt.Color(0, 102, 102));
-        jButton1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jButton1.setForeground(new java.awt.Color(255, 255, 255));
-        jButton1.setText("Tìm kiếm");
-        jButton1.setToolTipText("");
-        jButton1.setBorderPainted(false);
-        jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-
-        jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
-        jTextField1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(102, 102, 102)));
-        jTextField1.setFocusable(false);
-        jTextField1.setOpaque(true);
-
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel2.setText("Mã nhà cung cấp:");
-
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel4.setText("Tên người đại diện:");
-
-        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel5.setText("Số điện thoại:");
-
-        jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel6.setText("Địa chỉ:");
-
-        btn_them.setBackground(new java.awt.Color(102, 102, 102));
-        btn_them.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btn_them.setForeground(new java.awt.Color(255, 255, 255));
-        btn_them.setText("Thêm");
-        btn_them.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btn_them.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_themActionPerformed(evt);
+    private void wireEvents() {
+        table_ncc.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (!SwingUtilities.isLeftMouseButton(e)) {
+                    return;
+                }
+                int row = table_ncc.getSelectedRow();
+                if (row >= 0) {
+                    ma_ncc.setText(String.valueOf(table_ncc.getValueAt(row, 0)));
+                    ten_ncc.setText(String.valueOf(table_ncc.getValueAt(row, 1)));
+                    ten_ndd.setText(String.valueOf(table_ncc.getValueAt(row, 2)));
+                    sdt_ncc.setText(String.valueOf(table_ncc.getValueAt(row, 3)));
+                    dchi_ncc.setText(String.valueOf(table_ncc.getValueAt(row, 4)));
+                }
             }
         });
 
-        btn_luu.setBackground(new java.awt.Color(0, 102, 0));
-        btn_luu.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btn_luu.setForeground(new java.awt.Color(255, 255, 255));
-        btn_luu.setText("Lưu");
-        btn_luu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btn_luu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_luuActionPerformed(evt);
+        DocumentListener searchListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                applyFilters();
             }
-        });
 
-        btn_sua.setBackground(new java.awt.Color(102, 102, 102));
-        btn_sua.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btn_sua.setForeground(new java.awt.Color(255, 255, 255));
-        btn_sua.setText("Sửa");
-        btn_sua.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btn_sua.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_suaActionPerformed(evt);
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                applyFilters();
             }
-        });
 
-        btn_xoa.setBackground(new java.awt.Color(153, 0, 0));
-        btn_xoa.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btn_xoa.setForeground(new java.awt.Color(255, 255, 255));
-        btn_xoa.setText("Xóa");
-        btn_xoa.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btn_xoa.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_xoaActionPerformed(evt);
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                applyFilters();
             }
-        });
+        };
+        txtSearch.getDocument().addDocumentListener(searchListener);
+        btnSearch.addActionListener(e -> applyFilters());
+        cboMaNCCFilter.addActionListener(e -> applyFilters());
+        cboTenNCCFilter.addActionListener(e -> applyFilters());
+        cboSdtFilter.addActionListener(e -> applyFilters());
 
-        table_ncc.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
+        btn_them.addActionListener(e -> btn_themActionPerformed());
+        btn_luu.addActionListener(e -> btn_luuActionPerformed());
+        btn_sua.addActionListener(e -> btn_suaActionPerformed());
+        btn_xoa.addActionListener(e -> btn_xoaActionPerformed());
+        btn_reset.addActionListener(e -> btn_resetActionPerformed());
+    }
 
-            },
-            new String [] {
-
-            }
-        ));
-        table_ncc.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        table_ncc.setOpaque(false);
-        table_ncc.getTableHeader().setResizingAllowed(false);
-        table_ncc.getTableHeader().setReorderingAllowed(false);
-        jScrollPane1.setViewportView(table_ncc);
-        if (table_ncc.getColumnModel().getColumnCount() > 0) {
-            table_ncc.getColumnModel().getColumn(0).setResizable(false);
-            table_ncc.getColumnModel().getColumn(0).setPreferredWidth(30);
+    public void loadTable(ArrayList<nhaCungCap> list) {
+        if (list.isEmpty()) {
+            return;
         }
-
-        sdt_ncc.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        sdt_ncc.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(102, 102, 102), 1, true));
-
-        dchi_ncc.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        dchi_ncc.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(102, 102, 102), 1, true));
-
-        ma_ncc.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        ma_ncc.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(102, 102, 102), 1, true));
-
-        ten_ncc.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        ten_ncc.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(102, 102, 102), 1, true));
-
-        btn_reset.setBackground(new java.awt.Color(102, 102, 102));
-        btn_reset.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btn_reset.setForeground(new java.awt.Color(255, 255, 255));
-        btn_reset.setText("Reset");
-        btn_reset.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btn_reset.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_resetActionPerformed(evt);
-            }
-        });
-
-        jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel7.setText("Tên nhà cung cấp:");
-
-        ten_ndd.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        ten_ndd.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(102, 102, 102), 1, true));
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(31, 31, 31)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 560, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(31, 31, 31)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel7)
-                                    .addComponent(jLabel4)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(ten_ncc, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
-                                            .addComponent(ten_ndd))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(jLabel6)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(dchi_ncc, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(159, 159, 159))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(ma_ncc, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(193, 193, 193)
-                                        .addComponent(sdt_ncc, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 0, Short.MAX_VALUE))))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(22, 22, 22)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel5)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(btn_them, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(25, 25, 25)
-                                        .addComponent(btn_sua, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(25, 25, 25)
-                                        .addComponent(btn_reset, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(75, 75, 75)
-                                        .addComponent(btn_xoa, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(btn_luu, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                        .addGap(0, 42, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jScrollPane1)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(27, 27, 27)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(ma_ncc, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5)
-                    .addComponent(sdt_ncc, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(21, 21, 21)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ten_ncc, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6)
-                    .addComponent(dchi_ncc, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel7))
-                .addGap(22, 22, 22)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(ten_ndd, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(20, 20, 20)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_them, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_xoa, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_reset, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_sua, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_luu, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 336, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(37, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 985, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 985, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 656, Short.MAX_VALUE)
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 656, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, Short.MAX_VALUE)))
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-     public void loadTable(ArrayList<nhaCungCap> list) {
         nhaCungCap ncc2 = list.get(list.size() - 1);
-        model.addRow(new Object[]{
-            ncc2.getMaNCC(), ncc2.getTenNCC(), ncc2.getTenNDD(),ncc2.getSdt(), ncc2.getDiachi()
-        });
+        model.addRow(new Object[]{ncc2.getMaNCC(), ncc2.getTenNCC(), ncc2.getTenNDD(), ncc2.getSdt(), ncc2.getDiachi()});
     }
 
     public void clearTable() {
@@ -347,16 +269,100 @@ public class NhaCungCap extends javax.swing.JPanel {
 
     public void getTable() {
         list = khBll.getALL();
-        try {
-            for (nhaCungCap row : list) {
-                model.addRow(new Object[]{
-                    row.getMaNCC(), row.getTenNCC(), row.getTenNDD(), row.getSdt(), row.getDiachi()
-                });
-            }
-            table_ncc.setModel(model);
-        } catch (Exception ex) {
-            System.out.println(ex);
+        updateFilterCombos();
+        applyFilters();
+    }
+
+    private void renderTable(ArrayList<nhaCungCap> data) {
+        model.setRowCount(0);
+        for (nhaCungCap row : data) {
+            model.addRow(new Object[]{row.getMaNCC(), row.getTenNCC(), row.getTenNDD(), row.getSdt(), row.getDiachi()});
         }
+    }
+
+    private void updateFilterCombos() {
+        updatingFilters = true;
+        Object selectedMa = cboMaNCCFilter.getSelectedItem();
+        Object selectedTen = cboTenNCCFilter.getSelectedItem();
+        Object selectedSdt = cboSdtFilter.getSelectedItem();
+
+        cboMaNCCFilter.removeAllItems();
+        cboTenNCCFilter.removeAllItems();
+        cboSdtFilter.removeAllItems();
+        cboMaNCCFilter.addItem("Tất cả mã NCC");
+        cboTenNCCFilter.addItem("Tất cả tên NCC");
+        cboSdtFilter.addItem("Tất cả SĐT");
+
+        for (nhaCungCap item : list) {
+            addUniqueComboItem(cboMaNCCFilter, item.getMaNCC());
+            addUniqueComboItem(cboTenNCCFilter, item.getTenNCC());
+            addUniqueComboItem(cboSdtFilter, item.getSdt());
+        }
+
+        restoreComboSelection(cboMaNCCFilter, selectedMa, 0);
+        restoreComboSelection(cboTenNCCFilter, selectedTen, 0);
+        restoreComboSelection(cboSdtFilter, selectedSdt, 0);
+        updatingFilters = false;
+    }
+
+    private void addUniqueComboItem(JComboBox<String> combo, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        for (int i = 0; i < combo.getItemCount(); i++) {
+            if (value.equals(combo.getItemAt(i))) {
+                return;
+            }
+        }
+        combo.addItem(value);
+    }
+
+    private void restoreComboSelection(JComboBox<String> combo, Object selectedValue, int defaultIndex) {
+        if (selectedValue != null) {
+            for (int i = 0; i < combo.getItemCount(); i++) {
+                if (selectedValue.equals(combo.getItemAt(i))) {
+                    combo.setSelectedIndex(i);
+                    return;
+                }
+            }
+        }
+        combo.setSelectedIndex(defaultIndex);
+    }
+
+    private void applyFilters() {
+        if (updatingFilters) {
+            return;
+        }
+        String selectedMa = String.valueOf(cboMaNCCFilter.getSelectedItem());
+        String selectedTen = String.valueOf(cboTenNCCFilter.getSelectedItem());
+        String selectedSdt = String.valueOf(cboSdtFilter.getSelectedItem());
+        String keyword = txtSearch.getText().trim().toLowerCase();
+
+        boolean filterMa = selectedMa != null && !"Tất cả mã NCC".equals(selectedMa);
+        boolean filterTen = selectedTen != null && !"Tất cả tên NCC".equals(selectedTen);
+        boolean filterSdt = selectedSdt != null && !"Tất cả SĐT".equals(selectedSdt);
+        boolean filterKeyword = !keyword.isEmpty();
+
+        ArrayList<nhaCungCap> result = new ArrayList<>();
+        for (nhaCungCap item : list) {
+            boolean matchesMa = !filterMa || selectedMa.equals(item.getMaNCC());
+            boolean matchesTen = !filterTen || selectedTen.equals(item.getTenNCC());
+            boolean matchesSdt = !filterSdt || selectedSdt.equals(item.getSdt());
+            boolean matchesKeyword = !filterKeyword
+                    || containsKeyword(item.getMaNCC(), keyword)
+                    || containsKeyword(item.getTenNCC(), keyword)
+                    || containsKeyword(item.getTenNDD(), keyword)
+                    || containsKeyword(item.getSdt(), keyword)
+                    || containsKeyword(item.getDiachi(), keyword);
+            if (matchesMa && matchesTen && matchesSdt && matchesKeyword) {
+                result.add(item);
+            }
+        }
+        renderTable(result);
+    }
+
+    private boolean containsKeyword(String value, String keyword) {
+        return value != null && value.toLowerCase().contains(keyword);
     }
 
     public void ResetFieldText() {
@@ -369,7 +375,7 @@ public class NhaCungCap extends javax.swing.JPanel {
 
     public void Editable() {
         btn_luu.setEnabled(true);
-        ma_ncc.setEditable(true);
+        ma_ncc.setEditable(false);
         ten_ncc.setEditable(true);
         ten_ndd.setEditable(true);
         sdt_ncc.setEditable(true);
@@ -384,189 +390,143 @@ public class NhaCungCap extends javax.swing.JPanel {
         sdt_ncc.setEditable(false);
         dchi_ncc.setEditable(false);
     }
-    private void btn_themActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_themActionPerformed
-        Editable();
+
+    private String generateNextMaNCC() {
+        list = khBll.getALL();
+        String prefix = "ncc";
+        int maxNumber = 0;
+        for (nhaCungCap item : list) {
+            String code = item.getMaNCC();
+            if (code == null || code.isBlank()) {
+                continue;
+            }
+            int splitIndex = code.length();
+            while (splitIndex > 0 && Character.isDigit(code.charAt(splitIndex - 1))) {
+                splitIndex--;
+            }
+            String numberPart = code.substring(splitIndex);
+            if (numberPart.isEmpty()) {
+                continue;
+            }
+            if (splitIndex > 0) {
+                prefix = code.substring(0, splitIndex);
+            }
+            try {
+                maxNumber = Math.max(maxNumber, Integer.parseInt(numberPart));
+            } catch (NumberFormatException ex) {
+                // Ignore codes without numeric suffix.
+            }
+        }
+        return prefix + String.format("%03d", maxNumber + 1);
+    }
+
+    private boolean validateInput(String ma, String tenncc, String tenndd, String sdt, String diachi) {
+        if (ma.isEmpty() || tenncc.isEmpty() || tenndd.isEmpty() || sdt.isEmpty() || diachi.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin");
+            return false;
+        }
+        if (!sdt.matches("^0\\d{9}$")) {
+            JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ");
+            return false;
+        }
+        return true;
+    }
+
+    private void btn_themActionPerformed() {
         ResetFieldText();
+        ma_ncc.setText(generateNextMaNCC());
+        Editable();
         count = 1;
         btn_them.setEnabled(false);
-    }//GEN-LAST:event_btn_themActionPerformed
+    }
 
-    private void btn_luuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_luuActionPerformed
-        switch (count) {
-            case 1 -> {
-                // Thêm
-                String ma = ma_ncc.getText().trim();
-                String tenncc = ten_ncc.getText().trim();
-                String tenndd = ten_ndd.getText().trim();
-                String sdt = sdt_ncc.getText().trim();
-                String diachi = dchi_ncc.getText().trim();
-                for (nhaCungCap tmp : list) {
-                    if (tmp.getMaNCC().equals(ma)) {
-                        JOptionPane.showMessageDialog(this, "Mã nhà cung cấp đã tồn tại");
-                        return;
-                    }
-                }
-
-                if (ma.isEmpty() || tenncc.isEmpty() || tenndd.isEmpty()|| sdt.isEmpty() || diachi.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng diền đầy đủ thông tin");
-                    return;
-                }
-                if (!sdt.matches("^0\\d{9}$")) {
-                    JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ");
-                    return;
-                }
-
-                try {
-                    ncc = new nhaCungCap(ma, tenncc, tenndd, sdt, diachi);
-                    list.add(ncc);
-                    khBll.add(ncc);
-                    ResetFieldText();
-                    UnEditable();
-                    loadTable(list);
-                    btn_them.setEnabled(true);
-                } catch (Exception ex) {
-                    System.out.println(ex);
-                }
-            }
-            case 2 -> {
-                // Sửa
-                boolean found = false;
-                String ma = ma_ncc.getText().trim();
-                String tenncc = ten_ncc.getText().trim();
-                String tenndd = ten_ndd.getText().trim();
-                String sdt = sdt_ncc.getText().trim();
-                String diachi = dchi_ncc.getText().trim();
-                if (!matmp.equals(ma)) {
-                    for (nhaCungCap tmp : list) {
-                        if (tmp.getMaNCC().equals(ma)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                if (found) {
-                    JOptionPane.showMessageDialog(this, "Mã nhà cung cấp đã tồn tại");
-                    return;
-                }
-                if (!sdt.matches("^0\\d{9}$")) {
-                    JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ");
-                    return;
-                }
-       
-                if (matmp.equals(ma) && tennddtmp.equals(tenndd) && tentmp.equals(tenncc)&& sdttmp.equals(sdt) && dchitmp.equals(diachi)) {
-                    int confirm = JOptionPane.showConfirmDialog(this, "Chưa có thông tin nào được sửa đổi, bạn có muốn tiếp tục ?");
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        return;
-                    } else {
-                        ResetFieldText();
-                        UnEditable();
-                        btn_sua.setEnabled(true);
-                        return;
-                    }
-                }
-
-                try {
-                    ncc = new nhaCungCap(ma, tenncc, tenndd, sdt, diachi);
-                    khBll.update(ncc, matmp);
-                    ResetFieldText();
-                    UnEditable();
-                    clearTable();
-                    getTable();
-                    btn_sua.setEnabled(true);
-                } catch (Exception ex) {
-                    System.out.println(ex);
-                }
-            }
+    private void btn_luuActionPerformed() {
+        String ma = ma_ncc.getText().trim();
+        String tenncc = ten_ncc.getText().trim();
+        String tenndd = ten_ndd.getText().trim();
+        String sdt = sdt_ncc.getText().trim();
+        String diachi = dchi_ncc.getText().trim();
+        if (!validateInput(ma, tenncc, tenndd, sdt, diachi)) {
+            return;
         }
-    }//GEN-LAST:event_btn_luuActionPerformed
 
-    private void btn_suaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_suaActionPerformed
-        String ma = ma_ncc.getText();
+        if (count == 1) {
+            ncc = new nhaCungCap(ma, tenncc, tenndd, sdt, diachi);
+            khBll.add(ncc);
+            ResetFieldText();
+            UnEditable();
+            btn_them.setEnabled(true);
+            clearTable();
+            getTable();
+            return;
+        }
+
+        if (count == 2) {
+            if (matmp.equals(ma) && tennddtmp.equals(tenndd) && tentmp.equals(tenncc) && sdttmp.equals(sdt) && dchitmp.equals(diachi)) {
+                JOptionPane.showMessageDialog(this, "Chưa có thông tin nào được sửa đổi");
+                return;
+            }
+            ncc = new nhaCungCap(ma, tenncc, tenndd, sdt, diachi);
+            khBll.update(ncc, matmp);
+            ResetFieldText();
+            UnEditable();
+            btn_sua.setEnabled(true);
+            clearTable();
+            getTable();
+        }
+    }
+
+    private void btn_suaActionPerformed() {
         matmp = ma_ncc.getText();
-        String tenncc = ten_ncc.getText();
         tentmp = ten_ncc.getText();
-        String tenndd = ten_ncc.getText();
         tennddtmp = ten_ndd.getText();
-        String sdt = sdt_ncc.getText();
         sdttmp = sdt_ncc.getText();
-        String diachi = dchi_ncc.getText();
         dchitmp = dchi_ncc.getText();
-        if (ma.isEmpty() && tenncc.isEmpty()&& tenndd.isEmpty() && sdt.isEmpty() && diachi.isEmpty()) {
+        if (matmp.isEmpty() && tentmp.isEmpty() && tennddtmp.isEmpty() && sdttmp.isEmpty() && dchitmp.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn đối tượng cần sửa");
-        } else {
-            Editable();
-            count = 2;
-            btn_sua.setEnabled(false);
+            return;
         }
-    }//GEN-LAST:event_btn_suaActionPerformed
+        Editable();
+        count = 2;
+        btn_sua.setEnabled(false);
+    }
 
-    private void btn_xoaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_xoaActionPerformed
+    private void btn_xoaActionPerformed() {
         String ma = ma_ncc.getText();
         String tenncc = ten_ncc.getText();
         String tenndd = ten_ndd.getText();
         String sdt = sdt_ncc.getText();
         String diachi = dchi_ncc.getText();
-        if (ma.isEmpty() && tenncc.isEmpty()&& tenndd.isEmpty() && sdt.isEmpty() && diachi.isEmpty()) {
+        if (ma.isEmpty() && tenncc.isEmpty() && tenndd.isEmpty() && sdt.isEmpty() && diachi.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn đối tượng cần xóa");
-        } else {
-            try {
-                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa ?");
-
-                if (confirm == JOptionPane.YES_OPTION) {
-                    ncc = new nhaCungCap(ma, tenncc,tenndd, sdt, diachi);
-                    list.remove(ncc);
-                    khBll.delete(ncc);
-                    ResetFieldText();
-                    clearTable();
-                    getTable();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Hủy xóa");
-                    ResetFieldText();
-                }
-            } catch (Exception ex) {
-                System.out.println(ex);
-            }
+            return;
         }
-    }//GEN-LAST:event_btn_xoaActionPerformed
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa ?");
+        if (confirm == JOptionPane.YES_OPTION) {
+            ncc = new nhaCungCap(ma, tenncc, tenndd, sdt, diachi);
+            khBll.delete(ncc);
+            ResetFieldText();
+            clearTable();
+            getTable();
+        }
+    }
 
-    private void btn_resetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_resetActionPerformed
+    private void btn_resetActionPerformed() {
         ResetFieldText();
+        txtSearch.setText("");
+        if (cboMaNCCFilter.getItemCount() > 0) {
+            cboMaNCCFilter.setSelectedIndex(0);
+        }
+        if (cboTenNCCFilter.getItemCount() > 0) {
+            cboTenNCCFilter.setSelectedIndex(0);
+        }
+        if (cboSdtFilter.getItemCount() > 0) {
+            cboSdtFilter.setSelectedIndex(0);
+        }
         UnEditable();
-        if (btn_luu.isEnabled()) {
-            btn_luu.setEnabled(false);
-        }
-        if (!btn_them.isEnabled()) {
-            btn_them.setEnabled(true);
-        }
-        if (!btn_sua.isEnabled()) {
-            btn_sua.setEnabled(true);
-        }
+        btn_them.setEnabled(true);
+        btn_sua.setEnabled(true);
         clearTable();
         getTable();
-    }//GEN-LAST:event_btn_resetActionPerformed
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    public javax.swing.JButton btn_luu;
-    public javax.swing.JButton btn_reset;
-    public javax.swing.JButton btn_sua;
-    public javax.swing.JButton btn_them;
-    public javax.swing.JButton btn_xoa;
-    public javax.swing.JTextField dchi_ncc;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextField jTextField1;
-    public javax.swing.JTextField ma_ncc;
-    public javax.swing.JTextField sdt_ncc;
-    public javax.swing.JTable table_ncc;
-    public javax.swing.JTextField ten_ncc;
-    public javax.swing.JTextField ten_ndd;
-    // End of variables declaration//GEN-END:variables
+    }
 }

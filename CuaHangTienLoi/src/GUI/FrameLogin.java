@@ -12,13 +12,8 @@ public class FrameLogin extends javax.swing.JFrame {
         initComponents();
         
     }
-    
-    public void FrameLogin(){
-       username_dn.grabFocus();
-   }
 
    
-    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -157,7 +152,7 @@ public class FrameLogin extends javax.swing.JFrame {
 
     private void btn_dnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_dnActionPerformed
         String username = username_dn.getText().trim();
-            String password = pass_dn.getText().trim();
+            String password = new String(pass_dn.getPassword()).trim();
             if(username.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin");
             }
@@ -165,14 +160,14 @@ public class FrameLogin extends javax.swing.JFrame {
                 int status = logbll.CheckStatusBLL(username, password);
                 switch (status) {
                     case 0 -> {
-                        TrangChu tc = new TrangChu(username);
+                        TrangChu tc = new TrangChu(username, status);
                         username_dn.setText("");
                         pass_dn.setText("");
                         this.dispose();
                         tc.setVisible(true);
                     }
                     case 1 -> {
-                        TrangChu tc = new TrangChu(username);
+                        TrangChu tc = new TrangChu(username, status);
                         username_dn.setText("");
                         pass_dn.setText("");
                         this.dispose();

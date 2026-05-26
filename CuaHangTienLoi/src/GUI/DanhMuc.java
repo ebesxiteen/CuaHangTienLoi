@@ -4,18 +4,29 @@
  */
 package GUI;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 
-import javax.swing.Icon;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -27,9 +38,12 @@ public class DanhMuc extends javax.swing.JPanel {
     private ArrayList<DTO.DanhMuc> list = new ArrayList<>();
     DanhMucBLL dmBll = new DanhMucBLL(this);
     private int count = 0;
-    private String matmp, tentmp;
-    private Icon icontmp;
+    private String matmp, tentmp, imgtmp;
     private File selectFile;
+    private String selectedImagePath;
+    private JComboBox<String> cboMaLoaiFilter;
+    private JComboBox<String> cboTenLoaiFilter;
+    private boolean updatingFilters;
     
     public DanhMuc() {
         initComponents();
@@ -37,11 +51,14 @@ public class DanhMuc extends javax.swing.JPanel {
         ma_loai.setEditable(false);
         ten_loai.setEditable(false);
         btn_chonanh.setEnabled(false);
-        model = (DefaultTableModel) table_danhmuc.getModel();
-
-        model.setColumnIdentifiers(new Object[]{
-            "Mã loại", "Tên loại", "Ảnh minh họa"
-        });
+        model = new DefaultTableModel(new Object[]{"Mã loại", "Tên loại", "Ảnh minh họa"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table_danhmuc.setModel(model);
+        table_danhmuc.setDefaultEditor(Object.class, null);
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
@@ -66,6 +83,7 @@ public class DanhMuc extends javax.swing.JPanel {
                         ma_loai.setText(data1.toString());
                         ten_loai.setText(data2.toString());
                         String imagePath = data3.toString();
+                        selectedImagePath = imagePath;
                         ImageIcon imageIcon = new ImageIcon(imagePath);
                         Image image = imageIcon.getImage().getScaledInstance(image_label.getWidth(), image_label.getHeight(), Image.SCALE_SMOOTH);
                         imageIcon = new ImageIcon(image);
@@ -92,21 +110,96 @@ public class DanhMuc extends javax.swing.JPanel {
     public void getTable() {
         list = dmBll.getALL();
         try {
-            for (DTO.DanhMuc row : list) {
-                model.addRow(new Object[]{
-                    row.getMaloai(), row.getTenloai(), row.getImg()
-                });
-            }
-            table_danhmuc.setModel(model);
+            updateFilterCombos();
+            renderTable(list);
         } catch (Exception ex) {
             System.out.println(ex);
         }
+    }
+
+    private void renderTable(ArrayList<DTO.DanhMuc> data) {
+        model.setRowCount(0);
+        for (DTO.DanhMuc row : data) {
+            model.addRow(new Object[]{
+                row.getMaloai(), row.getTenloai(), row.getImg()
+            });
+        }
+        table_danhmuc.setModel(model);
+    }
+
+    private void updateFilterCombos() {
+        if (cboMaLoaiFilter == null || cboTenLoaiFilter == null) {
+            return;
+        }
+
+        updatingFilters = true;
+        Object selectedMa = cboMaLoaiFilter.getSelectedItem();
+        Object selectedTen = cboTenLoaiFilter.getSelectedItem();
+
+        cboMaLoaiFilter.removeAllItems();
+        cboTenLoaiFilter.removeAllItems();
+        cboMaLoaiFilter.addItem("Tất cả mã loại");
+        cboTenLoaiFilter.addItem("Tất cả tên loại");
+
+        for (DTO.DanhMuc item : list) {
+            if (item.getMaloai() != null) {
+                cboMaLoaiFilter.addItem(item.getMaloai());
+            }
+            if (item.getTenloai() != null) {
+                cboTenLoaiFilter.addItem(item.getTenloai());
+            }
+        }
+
+        restoreComboSelection(cboMaLoaiFilter, selectedMa, 0);
+        restoreComboSelection(cboTenLoaiFilter, selectedTen, 0);
+        updatingFilters = false;
+    }
+
+    private void restoreComboSelection(JComboBox<String> combo, Object selectedValue, int defaultIndex) {
+        if (selectedValue != null) {
+            for (int i = 0; i < combo.getItemCount(); i++) {
+                if (selectedValue.equals(combo.getItemAt(i))) {
+                    combo.setSelectedIndex(i);
+                    return;
+                }
+            }
+        }
+        combo.setSelectedIndex(defaultIndex);
+    }
+
+    private void applyDanhMucFilters() {
+        if (updatingFilters) {
+            return;
+        }
+
+        String selectedMa = String.valueOf(cboMaLoaiFilter.getSelectedItem());
+        String selectedTen = String.valueOf(cboTenLoaiFilter.getSelectedItem());
+        String keyword = jTextField1 != null ? jTextField1.getText().trim().toLowerCase() : "";
+        boolean filterMa = selectedMa != null && !"Tất cả mã loại".equals(selectedMa);
+        boolean filterTen = selectedTen != null && !"Tất cả tên loại".equals(selectedTen);
+        boolean filterKeyword = !keyword.isEmpty();
+
+        ArrayList<DTO.DanhMuc> result = new ArrayList<>();
+        for (DTO.DanhMuc item : list) {
+            boolean matchesMa = !filterMa || selectedMa.equals(item.getMaloai());
+            boolean matchesTen = !filterTen || selectedTen.equals(item.getTenloai());
+            boolean matchesKeyword = !filterKeyword
+                    || (item.getMaloai() != null && item.getMaloai().toLowerCase().contains(keyword))
+                    || (item.getTenloai() != null && item.getTenloai().toLowerCase().contains(keyword));
+            if (matchesMa && matchesTen && matchesKeyword) {
+                result.add(item);
+            }
+        }
+
+        renderTable(result);
     }
 
     public void ResetFieldText() {
         ma_loai.setText("");
         ten_loai.setText("");
         image_label.setIcon(null);
+        selectFile = null;
+        selectedImagePath = null;
     }
 
     public void UnEditable() {
@@ -119,8 +212,89 @@ public class DanhMuc extends javax.swing.JPanel {
     public void Editable() {
         btn_luu.setEnabled(true);
         btn_chonanh.setEnabled(true);
-        ma_loai.setEditable(true);
+        ma_loai.setEditable(false);
         ten_loai.setEditable(true);
+    }
+
+    private boolean validateInput(String maloai, String tenloai, String imagePath) {
+        if (maloai.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không thể tạo mã loại tự động");
+            return false;
+        }
+        if (!maloai.matches("[A-Za-z0-9_-]+")) {
+            JOptionPane.showMessageDialog(this, "Mã loại chỉ được chứa chữ không dấu, số, dấu gạch dưới hoặc gạch ngang");
+            ma_loai.requestFocus();
+            return false;
+        }
+        if (tenloai.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên loại");
+            ten_loai.requestFocus();
+            return false;
+        }
+        if (tenloai.length() < 2) {
+            JOptionPane.showMessageDialog(this, "Tên loại phải có ít nhất 2 ký tự");
+            ten_loai.requestFocus();
+            return false;
+        }
+        if (imagePath == null || imagePath.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ảnh minh họa");
+            return false;
+        }
+        return true;
+    }
+
+    private String generateNextMaLoai() {
+        list = dmBll.getALL();
+        String prefix = "DM";
+        int maxNumber = 0;
+
+        for (DTO.DanhMuc item : list) {
+            String code = item.getMaloai();
+            if (code == null || code.isBlank()) {
+                continue;
+            }
+
+            int splitIndex = code.length();
+            while (splitIndex > 0 && Character.isDigit(code.charAt(splitIndex - 1))) {
+                splitIndex--;
+            }
+
+            String numberPart = code.substring(splitIndex);
+            if (numberPart.isEmpty()) {
+                continue;
+            }
+
+            if (splitIndex > 0) {
+                prefix = code.substring(0, splitIndex);
+            }
+
+            try {
+                maxNumber = Math.max(maxNumber, Integer.parseInt(numberPart));
+            } catch (NumberFormatException ex) {
+                // Ignore codes without a numeric suffix.
+            }
+        }
+
+        return prefix + String.format("%03d", maxNumber + 1);
+    }
+
+    private boolean isDuplicateCode(String maloai, String oldCode) {
+        for (DTO.DanhMuc tmp : list) {
+            if (tmp.getMaloai().equalsIgnoreCase(maloai)
+                    && (oldCode == null || !tmp.getMaloai().equalsIgnoreCase(oldCode))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isImagePathValid(String imagePath) {
+        String lowerPath = imagePath.toLowerCase();
+        return lowerPath.endsWith(".jpg")
+                || lowerPath.endsWith(".jpeg")
+                || lowerPath.endsWith(".png")
+                || lowerPath.endsWith(".gif")
+                || lowerPath.endsWith(".bmp");
     }
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -136,7 +310,17 @@ public class DanhMuc extends javax.swing.JPanel {
         btn_sua = new javax.swing.JButton();
         btn_xoa = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
-        table_danhmuc = new javax.swing.JTable();
+        table_danhmuc = new javax.swing.JTable() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+            @Override
+            public boolean editCellAt(int row, int column, java.util.EventObject e) {
+                return false;
+            }
+        };
         ma_loai = new javax.swing.JTextField();
         ten_loai = new javax.swing.JTextField();
         btn_reset1 = new javax.swing.JButton();
@@ -144,12 +328,15 @@ public class DanhMuc extends javax.swing.JPanel {
         btn_chonanh = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         image_label = new javax.swing.JLabel();
+        cboMaLoaiFilter = new JComboBox<>();
+        cboTenLoaiFilter = new JComboBox<>();
 
         setBackground(new java.awt.Color(255, 255, 255));
+        setPreferredSize(new java.awt.Dimension(1015, 690));
 
-        jLabel1.setFont(new java.awt.Font("Sitka Small", 1, 26)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 26)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(0, 102, 102));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel1.setText("QUẢN LÝ DANH MỤC");
 
         jButton1.setBackground(new java.awt.Color(0, 102, 102));
@@ -160,11 +347,48 @@ public class DanhMuc extends javax.swing.JPanel {
         jButton1.setBorderPainted(false);
         jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                applyDanhMucFilters();
+            }
+        });
 
         jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         jTextField1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(102, 102, 102)));
-        jTextField1.setFocusable(false);
+        jTextField1.setFocusable(true);
         jTextField1.setOpaque(true);
+        jTextField1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                applyDanhMucFilters();
+            }
+        });
+        jTextField1.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                applyDanhMucFilters();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                applyDanhMucFilters();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                applyDanhMucFilters();
+            }
+        });
+
+        cboMaLoaiFilter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                applyDanhMucFilters();
+            }
+        });
+        cboTenLoaiFilter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                applyDanhMucFilters();
+            }
+        });
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jLabel2.setText("Mã loại:");
@@ -225,8 +449,12 @@ public class DanhMuc extends javax.swing.JPanel {
             }
         ));
         table_danhmuc.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        table_danhmuc.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        table_danhmuc.setRowSelectionAllowed(true);
+        table_danhmuc.setCellSelectionEnabled(false);
         table_danhmuc.setGridColor(new java.awt.Color(255, 255, 255));
         table_danhmuc.setOpaque(false);
+        table_danhmuc.setRowHeight(28);
         table_danhmuc.getTableHeader().setResizingAllowed(false);
         table_danhmuc.getTableHeader().setReorderingAllowed(false);
         jScrollPane2.setViewportView(table_danhmuc);
@@ -274,105 +502,110 @@ public class DanhMuc extends javax.swing.JPanel {
         jLabel3.setForeground(new java.awt.Color(0, 102, 102));
         jLabel3.setText("Thông tin danh mục: ");
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 612, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(0, 67, Short.MAX_VALUE)
-                                .addComponent(btn_them, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btn_sua, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btn_reset1, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel5)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(ma_loai))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(12, 12, 12)
-                                        .addComponent(btn_chonanh, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(0, 0, Short.MAX_VALUE))))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGap(97, 97, 97)
-                                .addComponent(ten_loai))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(btn_luu, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(btn_xoa, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(image_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(33, 33, 33)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 560, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(24, 24, 24))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(40, 40, 40)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(btn_reset1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btn_sua, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btn_them, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(16, 16, 16)
-                        .addComponent(jLabel3)
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel2)
-                            .addComponent(ma_loai, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(27, 27, 27)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(ten_loai, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel7))
-                        .addGap(26, 26, 26)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel5)
-                            .addComponent(btn_chonanh))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(16, 16, 16)
-                                .addComponent(btn_luu, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(26, 26, 26)
-                                .addComponent(btn_xoa, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(image_label, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(25, 25, 25)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 539, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(35, Short.MAX_VALUE))
-        );
+        setLayout(new BorderLayout(10, 10));
+
+        JPanel titlePanel = new JPanel(new BorderLayout(8, 0));
+        titlePanel.setBackground(java.awt.Color.WHITE);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
+        titlePanel.add(jLabel1, BorderLayout.WEST);
+
+        JPanel searchPanel = new JPanel(new BorderLayout(6, 0));
+        searchPanel.setBackground(java.awt.Color.WHITE);
+        jTextField1.setPreferredSize(new Dimension(240, 28));
+        jButton1.setPreferredSize(new Dimension(100, 28));
+        searchPanel.add(jTextField1, BorderLayout.CENTER);
+        searchPanel.add(jButton1, BorderLayout.EAST);
+        titlePanel.add(searchPanel, BorderLayout.EAST);
+
+        add(titlePanel, BorderLayout.NORTH);
+
+        JPanel tablePanel = new JPanel(new BorderLayout(8, 8));
+        tablePanel.setBackground(java.awt.Color.WHITE);
+        tablePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 5));
+        JPanel filterPanel = new JPanel(new GridLayout(1, 3, 0, 0));
+        filterPanel.setBackground(java.awt.Color.WHITE);
+        filterPanel.add(cboMaLoaiFilter);
+        filterPanel.add(cboTenLoaiFilter);
+        filterPanel.add(new JLabel(""));
+        tablePanel.add(filterPanel, BorderLayout.NORTH);
+        tablePanel.add(jScrollPane2, BorderLayout.CENTER);
+        tablePanel.setMinimumSize(new Dimension(560, 0));
+
+        JPanel formPanel = new JPanel(new BorderLayout(8, 8));
+        formPanel.setBackground(java.awt.Color.WHITE);
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
+        formPanel.setMinimumSize(new Dimension(360, 0));
+
+        JPanel actionTop = new JPanel(new GridLayout(1, 3, 8, 0));
+        actionTop.setBackground(java.awt.Color.WHITE);
+        actionTop.setPreferredSize(new Dimension(0, 38));
+        actionTop.add(btn_them);
+        actionTop.add(btn_sua);
+        actionTop.add(btn_reset1);
+
+        JPanel infoPanel = new JPanel(new GridBagLayout());
+        infoPanel.setBackground(java.awt.Color.WHITE);
+        infoPanel.setBorder(BorderFactory.createTitledBorder("Thông tin danh mục"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        infoPanel.add(jLabel2, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        infoPanel.add(ma_loai, gbc);
+
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        infoPanel.add(jLabel7, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        infoPanel.add(ten_loai, gbc);
+
+        gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        infoPanel.add(jLabel5, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        infoPanel.add(btn_chonanh, gbc);
+
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setBackground(java.awt.Color.WHITE);
+        imagePanel.setBorder(BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
+        imagePanel.setPreferredSize(new Dimension(0, 230));
+        imagePanel.add(image_label, BorderLayout.CENTER);
+
+        JPanel formCenter = new JPanel(new BorderLayout(8, 8));
+        formCenter.setBackground(java.awt.Color.WHITE);
+        formCenter.add(infoPanel, BorderLayout.NORTH);
+        formCenter.add(imagePanel, BorderLayout.CENTER);
+
+        JPanel actionBottom = new JPanel(new GridLayout(1, 2, 8, 0));
+        actionBottom.setBackground(java.awt.Color.WHITE);
+        actionBottom.setPreferredSize(new Dimension(0, 38));
+        actionBottom.add(btn_xoa);
+        actionBottom.add(btn_luu);
+
+        formPanel.add(actionTop, BorderLayout.NORTH);
+        formPanel.add(formCenter, BorderLayout.CENTER);
+        formPanel.add(actionBottom, BorderLayout.SOUTH);
+
+        javax.swing.JSplitPane splitPane = new javax.swing.JSplitPane(javax.swing.JSplitPane.HORIZONTAL_SPLIT, tablePanel, formPanel);
+        splitPane.setResizeWeight(0.62);
+        splitPane.setDividerLocation(620);
+        splitPane.setBorder(null);
+        add(splitPane, BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btn_themActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_themActionPerformed
-        Editable();
         ResetFieldText();
+        ma_loai.setText(generateNextMaLoai());
+        Editable();
         count = 1;
         btn_them.setEnabled(false);
     }//GEN-LAST:event_btn_themActionPerformed
@@ -383,24 +616,17 @@ public class DanhMuc extends javax.swing.JPanel {
                 // Thêm
                 String maloai = ma_loai.getText().trim();
                 String tenloai = ten_loai.getText().trim();
-                String img;
-                Icon icon = image_label.getIcon();
-                for (DTO.DanhMuc tmp : list) {
-                    if (tmp.getMaloai().equals(maloai)) {
-                        JOptionPane.showMessageDialog(this, "Mã loại đã tồn tại");
-                        return;
-                    }
-                }
-
-                if (icon == null || maloai.isEmpty() || tenloai.isEmpty() ) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin");
+                String img = selectedImagePath;
+                if (!validateInput(maloai, tenloai, img)) {
                     return;
                 }
-
-                if (icon instanceof ImageIcon) {
-                    img = selectFile.getAbsolutePath();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Đây không phải là ảnh");
+                if (isDuplicateCode(maloai, null)) {
+                    JOptionPane.showMessageDialog(this, "Mã loại đã tồn tại");
+                    ma_loai.requestFocus();
+                    return;
+                }
+                if (!isImagePathValid(img)) {
+                    JOptionPane.showMessageDialog(this, "File ảnh không hợp lệ");
                     return;
                 }
 
@@ -410,7 +636,8 @@ public class DanhMuc extends javax.swing.JPanel {
                     dmBll.add(dm);
                     ResetFieldText();
                     UnEditable();
-                    loadTable(list);
+                    clearTable();
+                    getTable();
                     btn_them.setEnabled(true);
                 } catch (Exception ex) {
                     System.out.println(ex);
@@ -418,46 +645,24 @@ public class DanhMuc extends javax.swing.JPanel {
             }
             case 2 -> {
                 // Sửa
-                boolean found = false;
-                String img;
                 String maloai = ma_loai.getText().trim();
                 String tenloai = ten_loai.getText().trim();
-                Icon icon = image_label.getIcon();
-                if (!matmp.equals(maloai)) {
-                    for (DTO.DanhMuc tmp : list) {
-                        if (tmp.getMaloai().equals(maloai)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                if (found) {
-                    JOptionPane.showMessageDialog(this, "Mã loại đã tồn tại");
+                String img = selectedImagePath;
+                if (!validateInput(maloai, tenloai, img)) {
                     return;
                 }
-
-                if (matmp.equals(maloai) && tentmp.equals(tenloai)  && icontmp.equals(icon)) {
-                    int confirm = JOptionPane.showConfirmDialog(this, "Chưa có thông tin nào được sửa đổi, bạn có muốn tiếp tục ?");
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        return;
-                    } else {
-                        ResetFieldText();
-                        UnEditable();
-                        btn_sua.setEnabled(true);
-                        return;
-                    }
+                if (!isImagePathValid(img)) {
+                    JOptionPane.showMessageDialog(this, "File ảnh không hợp lệ");
+                    return;
                 }
-                
-                if (icon instanceof ImageIcon) {
-                    img = selectFile.getAbsolutePath();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Đây không phải là ảnh");
+                if (matmp.equals(maloai) && tentmp.equals(tenloai) && img.equals(imgtmp)) {
+                    JOptionPane.showMessageDialog(this, "Chưa có thông tin nào được sửa đổi");
                     return;
                 }
 
                 try {
                     dm = new DTO.DanhMuc(maloai, tenloai, img);
-                    dmBll.update(dm, matmp);
+                    dmBll.update(dm);
                     ResetFieldText();
                     UnEditable();
                     clearTable();
@@ -475,8 +680,8 @@ public class DanhMuc extends javax.swing.JPanel {
         matmp = ma_loai.getText();
         String tenloai = ten_loai.getText();
         tentmp = ten_loai.getText();
-        icontmp = image_label.getIcon();
-        if (maloai.isEmpty() && tenloai.isEmpty()&& icontmp==null) {
+        imgtmp = selectedImagePath;
+        if (maloai.isEmpty() && tenloai.isEmpty() && imgtmp == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn đối tượng cần sửa");
         } else {
             Editable();
@@ -488,17 +693,14 @@ public class DanhMuc extends javax.swing.JPanel {
     private void btn_xoaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_xoaActionPerformed
         String maloai = ma_loai.getText();
         String tenloai = ten_loai.getText();
-        Icon icon = image_label.getIcon();
-        if (maloai.isEmpty() && tenloai.isEmpty()&& icon==null) {
+        if (maloai.isEmpty() && tenloai.isEmpty() && selectedImagePath == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn đối tượng cần xóa");
         } else {
             try {
                 int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa ?");
 
                 if (confirm == JOptionPane.YES_OPTION) {
-                    Image image = ((ImageIcon) icon).getImage();
-                    String imagePath = image.toString();
-                    dm = new DTO.DanhMuc(maloai, tenloai,imagePath);
+                    dm = new DTO.DanhMuc(maloai, tenloai, selectedImagePath);
                     list.remove(dm);
                     dmBll.delete(dm);
                     ResetFieldText();
@@ -520,6 +722,15 @@ public class DanhMuc extends javax.swing.JPanel {
 
     private void btn_reset1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_reset1ActionPerformed
         ResetFieldText();
+        if (jTextField1 != null) {
+            jTextField1.setText("");
+        }
+        if (cboMaLoaiFilter != null) {
+            cboMaLoaiFilter.setSelectedIndex(0);
+        }
+        if (cboTenLoaiFilter != null) {
+            cboTenLoaiFilter.setSelectedIndex(0);
+        }
         UnEditable();
         if (btn_luu.isEnabled()) {
             btn_luu.setEnabled(false);
@@ -542,6 +753,11 @@ public class DanhMuc extends javax.swing.JPanel {
             if (result == JFileChooser.APPROVE_OPTION) {
                 selectFile = fchooser.getSelectedFile();
                 String imagePath = selectFile.getAbsolutePath();
+                if (!isImagePathValid(imagePath)) {
+                    JOptionPane.showMessageDialog(this, "File ảnh không hợp lệ");
+                    return;
+                }
+                selectedImagePath = imagePath;
                 ImageIcon imageIcon = new ImageIcon(imagePath);
                 Image image = imageIcon.getImage().getScaledInstance(image_label.getWidth(), image_label.getHeight(), Image.SCALE_SMOOTH);
                 imageIcon = new ImageIcon(image);

@@ -3,32 +3,43 @@ package GUI;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JFrame;
 
 public class TrangChu extends JFrame{
     CardLayout cardlayout;
     private boolean isMenuVisible;
-    NhanVienView nvView = new NhanVienView();
-    SanPhamView spView = new SanPhamView();
-    KhachHangView khView = new KhachHangView();
-    NhaCungCap nccView = new NhaCungCap();
-    DanhMuc dmView = new DanhMuc(); 
-    phieuNhap pnView = new phieuNhap();
-    HoaDon hdView = new HoaDon();
-    CTHoaDon cthdView = new CTHoaDon();
-    TaiKhoan tkView = new TaiKhoan();
+    private Set<String> addedViews = new HashSet<>();
+    private String currentUsername;
+    private int loginStatus;
+    NhanVienView nvView;
+    SanPhamView spView;
+    KhachHangView khView;
+    NhaCungCap nccView;
+    DanhMuc dmView; 
+    phieuNhap pnView;
+    HoaDonWorkspace hdView;
+    DoanhThuWorkspace doanhThuView;
+    TaiKhoan tkView;
     
     public TrangChu(String username) {
+        this(username, 1);
+    }
+
+    public TrangChu(String username, int status) {
+        this.currentUsername = username;
+        this.loginStatus = status;
         initComponents();
     }
     
     public void ClearTableALL() {
-        nvView.clearTable();
-        spView.clearTable();
-        khView.clearTable();
-        nccView.clearTable();
-        dmView.clearTable();
+        if (nvView != null) nvView.clearTable();
+        if (spView != null) spView.clearTable();
+        if (khView != null) khView.clearTable();
+        if (nccView != null) nccView.clearTable();
+        if (dmView != null) dmView.clearTable();
     }
 
     @SuppressWarnings("unchecked")
@@ -38,8 +49,6 @@ public class TrangChu extends JFrame{
         Pane_content = new javax.swing.JPanel();
         pHoaDon = new javax.swing.JPanel();
         lHoaDon = new javax.swing.JLabel();
-        pChiTietHD = new javax.swing.JPanel();
-        lChiTietHD = new javax.swing.JLabel();
         pDanhMuc = new javax.swing.JPanel();
         lDanhMuc = new javax.swing.JLabel();
         pSanPham = new javax.swing.JPanel();
@@ -48,10 +57,10 @@ public class TrangChu extends JFrame{
         lDoanhThu = new javax.swing.JLabel();
         pNhanVien = new javax.swing.JPanel();
         lNhanVien = new javax.swing.JLabel();
-        pQuanLy = new javax.swing.JPanel();
-        lQuanLy = new javax.swing.JLabel();
         pNhaCC = new javax.swing.JPanel();
         lNhaCC = new javax.swing.JLabel();
+        pQuanLy = new javax.swing.JPanel();
+        lQuanLy = new javax.swing.JLabel();
         pDangXuat = new javax.swing.JPanel();
         lDangXuat = new javax.swing.JLabel();
         pTaiKhoan = new javax.swing.JPanel();
@@ -61,29 +70,19 @@ public class TrangChu extends JFrame{
         cardlayout = new CardLayout();
         Pane_content.setLayout(cardlayout);
         
-        Pane_content.add(nvView,"QL Nhân Viên");
-        Pane_content.add(spView,"QL Sản Phẩm");
-        Pane_content.add(khView,"QL Khách Hàng");
-        Pane_content.add(pnView,"Phiếu Nhập");
-        Pane_content.add(nccView,"Nhà Cung Cấp");
-        Pane_content.add(dmView,"Danh Mục");
-        // Add invoice views
-        Pane_content.add(hdView, "Hóa Đơn");
-        Pane_content.add(cthdView, "Chi Tiết HĐ");
-        Pane_content.add(tkView, "Tài Khoản");
+        // Views are lazily created when menu items are clicked to avoid startup errors
        
-        isMenuVisible = false;
+        isMenuVisible = true;
         Pane_content.setVisible(isMenuVisible);
+        cardlayout.show(Pane_content, "Hóa Đơn");
         
         
         
         
    
         
-        this.setSize(1240,690);
         this.setResizable(false);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setLocationRelativeTo(null);
         
         
         
@@ -91,15 +90,14 @@ public class TrangChu extends JFrame{
 
         MenuPanel.setBackground(new java.awt.Color(29, 117, 109));
 
-        
-        Pane_cover.setSize(1240,690);
         Pane_cover.setBackground(Color.white);
         Pane_content.setBackground(Color.white);
+        Pane_cover.setPreferredSize(new java.awt.Dimension(1240, 690));
+        Pane_cover.setBounds(0, 0, 1240, 690);
         MenuPanel.setBounds(0, 0, 200, 690);
         Pane_content.setBounds(205,0,1015,690);
         
         Pane_cover.setLayout(null);
-        this.setLayout(null);
         
         pHoaDon.setLayout(null);
         pHoaDon.setBackground(new java.awt.Color(29, 117, 109));
@@ -108,11 +106,13 @@ public class TrangChu extends JFrame{
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 // Hiển thị panel Hóa Đơn
+                if (hdView == null) hdView = new HoaDonWorkspace();
+                if (!addedViews.contains("Hóa Đơn")) { Pane_content.add(hdView, "Hóa Đơn"); addedViews.add("Hóa Đơn"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
                 cardlayout.show(Pane_content, "Hóa Đơn");
-                // (Optional) later: load data into hdView from BLL/DAL
+                hdView.loadInvoices();
             }
 
             @Override
@@ -136,47 +136,15 @@ public class TrangChu extends JFrame{
         int labelY = (pHoaDon.getHeight() - lHoaDon.getPreferredSize().height) / 2;
         lHoaDon.setBounds(labelX, labelY, lHoaDon.getPreferredSize().width, lHoaDon.getPreferredSize().height);
 
-        pChiTietHD.setLayout(null);
-        pChiTietHD.setBackground(new java.awt.Color(29, 117, 109));
-        pChiTietHD.setBounds(0, 125, 200, 50);
-        pChiTietHD.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Hiển thị panel Chi Tiết Hóa Đơn
-                ClearTableALL();
-                isMenuVisible = true;
-                Pane_content.setVisible(isMenuVisible);
-                cardlayout.show(Pane_content, "Chi Tiết HĐ");
-                // (Optional) later: load detail data for selected invoice
-            }
-
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                pChiTietHD.setBackground(new Color(64, 164, 156));
-                pChiTietHD.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                pChiTietHD.setBackground(new Color(29, 117, 109));
-            }
-        });
-
-        lChiTietHD.setFont(new java.awt.Font("Sitka Text", 0, 16)); // NOI18N
-        lChiTietHD.setForeground(new java.awt.Color(255, 255, 255));
-        lChiTietHD.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lChiTietHD.setText("Chi Tiết HĐ");
-        labelX = (pHoaDon.getWidth() - lChiTietHD.getPreferredSize().width) / 2;
-        labelY = (pHoaDon.getHeight() - lChiTietHD.getPreferredSize().height) / 2;
-        lChiTietHD.setBounds(labelX, labelY, lChiTietHD.getPreferredSize().width, lChiTietHD.getPreferredSize().height);
-
-
         pDanhMuc.setLayout(null);
         pDanhMuc.setBackground(new java.awt.Color(29, 117, 109));
-        pDanhMuc.setBounds(0, 175, 200, 50);
+        pDanhMuc.setBounds(0, 125, 200, 50);
         pDanhMuc.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                // lazy init
+                if (dmView == null) dmView = new DanhMuc();
+                if (!addedViews.contains("Danh Mục")) { Pane_content.add(dmView, "Danh Mục"); addedViews.add("Danh Mục"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -207,12 +175,14 @@ public class TrangChu extends JFrame{
 
         pSanPham.setLayout(null);
         pSanPham.setBackground(new java.awt.Color(29, 117, 109));
-        pSanPham.setBounds(0, 225, 200, 50);
+        pSanPham.setBounds(0, 175, 200, 50);
         
         // Nút hiện QL Sản Phẩm
         pSanPham.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (spView == null) spView = new SanPhamView();
+                if (!addedViews.contains("QL Sản Phẩm")) { Pane_content.add(spView, "QL Sản Phẩm"); addedViews.add("QL Sản Phẩm"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -244,16 +214,18 @@ public class TrangChu extends JFrame{
 
         pDoanhThu.setLayout(null);
         pDoanhThu.setBackground(new java.awt.Color(29, 117, 109));
-        pDoanhThu.setBounds(0, 275, 200, 50);
+        pDoanhThu.setBounds(0, 225, 200, 50);
         pDoanhThu.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Minimal: hiển thị hộp thông báo hoặc chuyển tới Hóa Đơn (có thể implement báo cáo sau)
+                if (doanhThuView == null) doanhThuView = new DoanhThuWorkspace();
+                if (!addedViews.contains("Doanh Thu")) { Pane_content.add(doanhThuView, "Doanh Thu"); addedViews.add("Doanh Thu"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
-                // For now show Hóa Đơn as base for doanh thu overview
-                cardlayout.show(Pane_content, "Hóa Đơn");
+                // Show Doanh Thu workspace
+                cardlayout.show(Pane_content, "Doanh Thu");
+                doanhThuView.reloadAllInvoicesDashboard();
             }
 
             @Override
@@ -278,12 +250,14 @@ public class TrangChu extends JFrame{
 
         pNhanVien.setLayout(null);
         pNhanVien.setBackground(new java.awt.Color(29, 117, 109));
-        pNhanVien.setBounds(0, 325, 200, 50);
+        pNhanVien.setBounds(0, 275, 200, 50);
         
         // Nút hiện QL Nhân Viên
         pNhanVien.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (nvView == null) nvView = new NhanVienView();
+                if (!addedViews.contains("QL Nhân Viên")) { Pane_content.add(nvView, "QL Nhân Viên"); addedViews.add("QL Nhân Viên"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -313,10 +287,12 @@ public class TrangChu extends JFrame{
 
         pNhaCC.setLayout(null);
         pNhaCC.setBackground(new java.awt.Color(29, 117, 109));
-        pNhaCC.setBounds(0, 375, 200, 50);
+        pNhaCC.setBounds(0, 325, 200, 50);
         pNhaCC.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (nccView == null) nccView = new NhaCungCap();
+                if (!addedViews.contains("Nhà Cung Cấp")) { Pane_content.add(nccView, "Nhà Cung Cấp"); addedViews.add("Nhà Cung Cấp"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -346,12 +322,14 @@ public class TrangChu extends JFrame{
 
         pQuanLy.setLayout(null);
         pQuanLy.setBackground(new java.awt.Color(29, 117, 109));
-        pQuanLy.setBounds(0, 425, 200, 50);
+        pQuanLy.setBounds(0, 375, 200, 50);
         
         // Nút hiện QL Khách Hàng
         pQuanLy.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (khView == null) khView = new KhachHangView();
+                if (!addedViews.contains("QL Khách Hàng")) { Pane_content.add(khView, "QL Khách Hàng"); addedViews.add("QL Khách Hàng"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -382,11 +360,13 @@ public class TrangChu extends JFrame{
 
         pTaiKhoan.setLayout(null);
         pTaiKhoan.setBackground(new java.awt.Color(29, 117, 109));
-        pTaiKhoan.setBounds(0, 475, 200, 50);
+        pTaiKhoan.setBounds(0, 425, 200, 50);
         pTaiKhoan.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 // Hiển thị module Quản lý Tài Khoản
+                if (tkView == null) tkView = new TaiKhoan();
+                if (!addedViews.contains("Tài Khoản")) { Pane_content.add(tkView, "Tài Khoản"); addedViews.add("Tài Khoản"); }
                 ClearTableALL();
                 isMenuVisible = true;
                 Pane_content.setVisible(isMenuVisible);
@@ -416,7 +396,7 @@ public class TrangChu extends JFrame{
 
         pDangXuat.setLayout(null);
         pDangXuat.setBackground(new java.awt.Color(29, 117, 109));
-        pDangXuat.setBounds(0, 525, 200, 50);
+        pDangXuat.setBounds(0, 475, 200, 50);
         pDangXuat.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -446,45 +426,55 @@ public class TrangChu extends JFrame{
         labelY = (pHoaDon.getHeight() - lDangXuat.getPreferredSize().height) / 2;
         lDangXuat.setBounds(labelX, labelY, lDangXuat.getPreferredSize().width, lDangXuat.getPreferredSize().height);
 
+        if (loginStatus != 0) {
+            pNhaCC.setBounds(0, 275, 200, 50);
+            pQuanLy.setBounds(0, 325, 200, 50);
+            pDangXuat.setBounds(0, 375, 200, 50);
+        }
 
         MenuPanel.add(pHoaDon);
-        MenuPanel.add(pChiTietHD);
         MenuPanel.add(pDanhMuc);
         MenuPanel.add(pSanPham);
         MenuPanel.add(pDoanhThu);
-        MenuPanel.add(pNhanVien);
         MenuPanel.add(pQuanLy);
         MenuPanel.add(pNhaCC);
+        if (loginStatus == 0) {
+            MenuPanel.add(pNhanVien);
+            MenuPanel.add(pTaiKhoan);
+        }
         MenuPanel.add(pDangXuat);
-        MenuPanel.add(pTaiKhoan);
         
         pHoaDon.setFocusable(true);
-        pChiTietHD.setFocusable(true);
         pDanhMuc.setFocusable(true);
         pSanPham.setFocusable(true);
         pDoanhThu.setFocusable(true);
-        pNhanVien.setFocusable(true);
         pQuanLy.setFocusable(true);
         pNhaCC.setFocusable(true);
-        pTaiKhoan.setFocusable(true);
+        if (loginStatus == 0) {
+            pNhanVien.setFocusable(true);
+            pTaiKhoan.setFocusable(true);
+        }
         pDangXuat.setFocusable(true);
         
         pHoaDon.add(lHoaDon);
-        pChiTietHD.add(lChiTietHD);
         pDanhMuc.add(lDanhMuc);
         pSanPham.add(lSanPham);
         pDoanhThu.add(lDoanhThu);
-        pNhanVien.add(lNhanVien);
         pQuanLy.add(lQuanLy);
         pNhaCC.add(lNhaCC);
-        pTaiKhoan.add(lTaiKhoan);
+        if (loginStatus == 0) {
+            pNhanVien.add(lNhanVien);
+            pTaiKhoan.add(lTaiKhoan);
+        }
         pDangXuat.add(lDangXuat);
         
         
         
         Pane_cover.add(MenuPanel);
         Pane_cover.add(Pane_content);
-        this.add(Pane_cover);
+        this.setContentPane(Pane_cover);
+        this.pack();
+        this.setLocationRelativeTo(null);
         
     }
 
@@ -492,7 +482,6 @@ public class TrangChu extends JFrame{
     public javax.swing.JPanel MenuPanel;
     public javax.swing.JPanel Pane_cover;
     public javax.swing.JPanel Pane_content;
-    public javax.swing.JLabel lChiTietHD;
     public javax.swing.JLabel lDanhMuc;
     public javax.swing.JLabel lDoanhThu;
     public javax.swing.JLabel lHoaDon;
@@ -502,7 +491,6 @@ public class TrangChu extends JFrame{
     public javax.swing.JLabel lQuanLy;
     public javax.swing.JLabel lTaiKhoan;
     public javax.swing.JLabel lDangXuat;
-    public javax.swing.JPanel pChiTietHD;
     public javax.swing.JPanel pDanhMuc;
     public javax.swing.JPanel pDoanhThu;
     public javax.swing.JPanel pHoaDon;

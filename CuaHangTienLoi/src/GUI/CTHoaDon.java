@@ -4,6 +4,15 @@
  */
 package GUI;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+
+import javax.swing.table.DefaultTableModel;
+
+import BLL.HoaDonBLL;
+import DTO.CtHoaDon;
+import DTO.HoaDon;
 /**
  *
  * @author ACER
@@ -15,6 +24,86 @@ public class CTHoaDon extends javax.swing.JPanel {
      */
     public CTHoaDon() {
         initComponents();
+        initHandlers();
+    }
+
+    private HoaDonBLL hdBLL = new HoaDonBLL();
+
+    public void loadHoaDonHistory() {
+        try {
+            ArrayList<HoaDon> list = hdBLL.getAll();
+            String[] cols = new String[]{"Mã HĐ", "Mã KH", "Mã NV", "Ngày", "Tổng"};
+            DefaultTableModel model = new DefaultTableModel(cols, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) { return false; }
+            };
+            for (HoaDon h : list) {
+                model.addRow(new Object[]{h.getMahd(), h.getMakh(), h.getManv(), h.getNgaytao(), h.getTongtien()});
+            }
+            jTable1.setModel(model);
+
+            // when select invoice, load details
+            jTable1.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    int r = jTable1.getSelectedRow();
+                    if (r >= 0) {
+                        String mahd = (String) jTable1.getValueAt(r, 0);
+                        loadCtForHoaDon(mahd);
+                    }
+                }
+            });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void loadCtForHoaDon(String mahd) {
+        try {
+            ArrayList<CtHoaDon> list = hdBLL.getCtByMa(mahd);
+            String[] cols = new String[]{"Mã HĐ", "Mã SP", "Số lượng", "Đơn giá", "Thành tiền"};
+            DefaultTableModel model = new DefaultTableModel(cols, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) { return false; }
+            };
+            for (CtHoaDon c : list) {
+                model.addRow(new Object[]{c.getMahd(), c.getMasp(), c.getSoluong(), c.getDongia(), c.getThanhtien()});
+            }
+            jTable2.setModel(model);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    // Wire delete/update buttons
+    private void initHandlers() {
+        jButton1.addActionListener(e -> {
+            int r = jTable2.getSelectedRow();
+            if (r < 0) { javax.swing.JOptionPane.showMessageDialog(this, "Chọn 1 chi tiết để xóa"); return; }
+            String mahd = (String) jTable2.getValueAt(r, 0);
+            String masp = (String) jTable2.getValueAt(r, 1);
+            int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Xóa chi tiết HĐ " + mahd + " - SP:" + masp + " ?", "Xác nhận", javax.swing.JOptionPane.YES_NO_OPTION);
+            if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+                DTO.CtHoaDon ct = new DTO.CtHoaDon(mahd, masp, 0, 0, 0);
+                DAL.CtHoaDonDAL.getintance().delete(ct);
+                loadCtForHoaDon(mahd);
+            }
+        });
+
+        jButton2.addActionListener(e -> {
+            int r = jTable2.getSelectedRow();
+            if (r < 0) { javax.swing.JOptionPane.showMessageDialog(this, "Chọn 1 chi tiết để cập nhật"); return; }
+            String mahd = (String) jTable2.getValueAt(r, 0);
+            String masp = (String) jTable2.getValueAt(r, 1);
+            String qtyStr = javax.swing.JOptionPane.showInputDialog(this, "Số lượng mới:");
+            int qty = 0; try { qty = Integer.parseInt(qtyStr); } catch (Exception ex) { javax.swing.JOptionPane.showMessageDialog(this, "Số lượng không hợp lệ"); return; }
+            String priceStr = javax.swing.JOptionPane.showInputDialog(this, "Đơn giá mới:");
+            int price = 0; try { price = Integer.parseInt(priceStr); } catch (Exception ex) { javax.swing.JOptionPane.showMessageDialog(this, "Đơn giá không hợp lệ"); return; }
+            int thanhtien = qty * price;
+            DTO.CtHoaDon ct = new DTO.CtHoaDon(mahd, masp, qty, price, thanhtien);
+            DAL.CtHoaDonDAL.getintance().update(ct);
+            loadCtForHoaDon(mahd);
+        });
     }
 
     /**
