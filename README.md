@@ -1,73 +1,107 @@
- # CuaHangTienLoi
+# CuaHangTienLoi
 
-Mục tiêu ngắn: Ứng dụng Java Swing quản lý cửa hàng nhỏ; đã được điều chỉnh để dễ chạy trên nhiều IDE và từ dòng lệnh.
+Ứng dụng Java Swing quản lý cửa hàng tiện lợi nhỏ. Dự án dùng kiến trúc phân lớp `GUI -> BLL -> DAL -> DTO -> Database`, lưu dữ liệu trong MySQL và có thể chạy bằng NetBeans, VS Code hoặc dòng lệnh.
 
-Tóm tắt dự án
-- Ngôn ngữ: Java (OpenJDK 21+)
-- Giao diện: Swing (form tạo bằng NetBeans)
-- Kiến trúc: phân lớp — `DTO` (model), `DAL` (truy cập dữ liệu), `BLL` (logic nghiệp vụ), `GUI` (giao diện)
+## Chức năng chính
 
-Luồng chính
-- Người dùng thao tác trên `GUI` → `BLL` xử lý nghiệp vụ và validate → `DAL` tương tác CSDL qua JDBC → `DTO` truyền dữ liệu.
-- Điểm bắt đầu: lớp `GUI.Start`.
+- Đăng nhập và phân quyền theo `login.status`.
+- Quản lý hóa đơn, tạo hóa đơn kèm chi tiết sản phẩm.
+- Xem doanh thu theo khoảng ngày, thống kê hóa đơn, sản phẩm và danh mục bán chạy.
+- Quản lý danh mục, sản phẩm, nhà cung cấp, khách hàng, nhân viên và tài khoản.
+- Tìm kiếm keyword realtime và filter theo cột ở các màn quản lý đã hiện đại hóa.
+- Tự sinh mã theo định dạng thống nhất:
+  - Khách hàng: `kh001`, `kh002`, ...
+  - Nhân viên: `nv001`, `nv002`, ...
+  - Nhà cung cấp: `ncc001`, `ncc002`, ...
+  - Sản phẩm: `sp001`, `sp002`, ...
+  - Danh mục: `dm001`, `dm002`, ...
 
-Yêu cầu môi trường
-- Java 21 (JDK) trở lên
-- MySQL 5.7+/8.x hoặc tương đương
-- `lib/mysql-connector-j-8.3.0.jar` có trong thư mục `lib/`
+## Phân quyền
 
-Cấu hình cơ sở dữ liệu
-- File cấu hình: `src/Database/db.properties`
-- Định dạng mẫu:
-  db.url=jdbc:mysql://HOST:PORT/DBNAME?useSSL=false&serverTimezone=UTC
-  db.user=your_user
-  db.password=your_password
+- `status = 0`: admin. Được xem và thao tác tất cả tab, bao gồm `QL Nhân Viên` và `Tài Khoản`.
+- `status = 1`: nhân viên. Không thấy tab `QL Nhân Viên` và `Tài Khoản`.
+- Mật khẩu chỉ được xem/sửa trong tab `Tài Khoản`. Tab `QL Nhân Viên` chỉ quản lý thông tin nhân viên, không hiển thị hoặc thay đổi mật khẩu.
 
-Ví dụ mặc định (nếu không có file cấu hình):
-- URL: `jdbc:mysql://localhost:3306/store?useSSL=false&serverTimezone=UTC`
-- User: `root` — Password: `123456789`
+Tài khoản seed mặc định:
 
-Chạy ứng dụng
-- VS Code: mở workspace gốc → Run and Debug → chọn cấu hình `Run CuaHangTienLoi`.
-- NetBeans: mở project loại Ant và chạy (cấu hình bảo toàn trong `nbproject`).
-- Dòng lệnh (biên dịch + chạy):
-```bash
-# biên dịch (tạo build/classes)
-javac -encoding UTF-8 -cp "lib/mysql-connector-j-8.3.0.jar" -d build/classes src/**/**/*.java
-
-# chạy
-java -cp "lib/mysql-connector-j-8.3.0.jar;build/classes" GUI.Start
+```text
+nv001 / nv001 / status 0
+nv002 / nv002 / status 1
 ```
 
-Lưu ý kỹ thuật
-- Đã thêm shim nhỏ `src/org/netbeans/lib/awtextra` (AbsoluteLayout/AbsoluteConstraints) để các form NetBeans biên dịch và chạy trên môi trường không có NetBeans.
-- Các file `.form` và code do NetBeans sinh vẫn được giữ; nếu muốn refactor giao diện, cân nhắc chuyển giao diện sang code thủ công hoặc chuyển sang build tool như Gradle.
+## Công nghệ
 
-Cấu trúc thư mục chính
-- `src/DTO` — lớp dữ liệu
-- `src/DAL` — truy cập dữ liệu (JDBC)
-- `src/BLL` — logic nghiệp vụ
-- `src/GUI` — giao diện
-- `lib/` — thư viện JAR (JDBC driver)
-- `nbproject/` — cấu hình Ant/NetBeans
+- Java Swing
+- JDBC
+- MySQL 8.x
+- MySQL Connector/J `8.3.0`
+- NetBeans Ant project
+- Docker Compose cho database local tùy chọn
 
-Vấn đề thường gặp & cách khắc phục nhanh
-- Lỗi kết nối DB: kiểm tra `db.properties`, đảm bảo MySQL đang chạy và schema `store` đã tồn tại.
-- Lỗi classpath: kiểm tra `lib/mysql-connector-j-8.3.0.jar` đã ở trong classpath khi biên dịch/chạy.
+## Cấu trúc thư mục
 
-Demo tái tạo nhanh (Docker)
+```text
+CuaHangTienLoi/
+  lib/                         MySQL JDBC driver
+  src/BLL/                     Business logic
+  src/DAL/                     Data access JDBC
+  src/DTO/                     Data transfer objects
+  src/GUI/                     Swing UI
+  src/Database/Connect.java    Kết nối MySQL
+  src/Database/db.properties   Cấu hình database
+  src/Database/store.sql       Schema và dữ liệu mẫu
+```
 
-- Khởi tạo MySQL cục bộ và nạp schema mẫu (dùng `store.sql` trong repo):
+## Cấu hình database
+
+File cấu hình:
+
+```text
+CuaHangTienLoi/src/Database/db.properties
+```
+
+Mặc định:
+
+```properties
+db.url=jdbc:mysql://localhost:3306/store?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+db.user=root
+db.password=""
+```
+
+Nếu dùng Docker Compose trong repo, mật khẩu MySQL mặc định trong `docker-compose.yml` là `rootpass`; khi đó cần sửa `db.properties` cho khớp.
+
+## Khởi tạo database
+
+Import schema và dữ liệu mẫu:
+
+```powershell
+C:\xampp\mysql\bin\mysql.exe -uroot -p123456789 < CuaHangTienLoi\src\Database\store.sql
+```
+
+Hoặc dùng Docker:
 
 ```bash
-# tạo branch để giữ lịch sử
-git checkout -b modernized
-
-# khởi MySQL và nạp schema (chỉ cần chạy lần đầu)
 docker compose up -d
-
-# dừng khi xong
-docker compose down
 ```
 
-- `docker-compose.yml` trong repo sẽ mount `CuaHangTienLoi/src/Database/store.sql` vào container để tự động tạo schema và dữ liệu mẫu.
+Lưu ý: Docker chỉ tự import `store.sql` khi volume database còn mới. Nếu đã có volume cũ, cần xóa volume hoặc import SQL thủ công.
+
+## Build và chạy
+
+Từ thư mục `CuaHangTienLoi/CuaHangTienLoi`:
+
+```powershell
+$srcList = Join-Path $env:TEMP 'chtl-sources.txt'
+Get-ChildItem -Recurse -Filter *.java src | ForEach-Object { $_.FullName } | Set-Content -Path $srcList
+cmd /c javac -encoding UTF-8 -cp "lib/mysql-connector-j-8.3.0.jar" -d build\classes "@$srcList"
+java -cp "build\classes;lib\mysql-connector-j-8.3.0.jar" GUI.Start
+```
+
+Trên NetBeans có thể mở project Ant và chạy main class `GUI.Start`.
+
+## Ghi chú hiện trạng
+
+- Một số màn hình Swing cũ được sinh bởi NetBeans, một số màn hình đã được viết lại thủ công để đồng bộ layout.
+- Các màn đã hiện đại hóa gồm danh mục, sản phẩm, nhà cung cấp, nhân viên, khách hàng, tài khoản, hóa đơn và doanh thu.
+- `sanpham` đã có thêm liên kết `mancc` với nhà cung cấp.
+- Dữ liệu khách hàng đã được chuẩn hóa mã theo format `khxxx`.
